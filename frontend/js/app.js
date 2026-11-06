@@ -644,7 +644,7 @@ class ChessApp {
             this.chess = candidate; this.initialFen = saved.initialFen;
             this.history = candidate.history({verbose:true});
             this.playerColor = saved.playerColor === 'black' ? 'black' : 'white';
-            this.aiDepth = [1,2,4,5].includes(saved.aiDepth) ? saved.aiDepth : 1;
+            this.aiDepth = [1,2,3,4,5].includes(saved.aiDepth) ? saved.aiDepth : 1;
             this.kidMode = saved.kidMode !== false;
             if (['wood','marble','cyberpunk','gold'].includes(saved.theme)) {
                 this.board3D.setTheme(saved.theme); document.getElementById('select-theme').value = saved.theme;

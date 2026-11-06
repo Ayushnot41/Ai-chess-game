@@ -30,9 +30,17 @@ def csrf_guard(request: Request):
     if request.headers.get("x-chess-client") != "1":
         raise HTTPException(403, "Please submit this request from the chess application.")
     origin = request.headers.get("origin")
-    expected = os.getenv("PUBLIC_ORIGIN", str(request.base_url).rstrip("/"))
-    if origin and origin.rstrip("/") != expected.rstrip("/"):
-        raise HTTPException(403, "This request came from another website.")
+    if origin:
+        expected = os.getenv("PUBLIC_ORIGIN", "").rstrip("/")
+        if expected:
+            if origin.rstrip("/") != expected:
+                raise HTTPException(403, "This request came from another website.")
+        else:
+            host = request.headers.get("x-forwarded-host") or request.headers.get("host") or ""
+            origin_host = origin.split("://")[-1].rstrip("/")
+            base_host = str(request.base_url).split("://")[-1].rstrip("/")
+            if host and origin_host != host and origin_host != base_host:
+                raise HTTPException(403, "This request came from another website.")
     if request.headers.get("sec-fetch-site") == "cross-site":
         raise HTTPException(403, "Cross-site requests are not allowed.")
 

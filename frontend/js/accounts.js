@@ -19,7 +19,7 @@ class ChessAccount {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 20000);
         try {
-            const response = await fetch(`/api/${path}`, {method, credentials:'same-origin', signal:controller.signal,
+            const response = await fetch(`/api/${path}`, {method, credentials:'include', signal:controller.signal,
                 headers:{'Content-Type':'application/json','X-Chess-Client':'1'}, body:payload ? JSON.stringify(payload) : undefined});
             const data = await response.json();
             if (!response.ok) {

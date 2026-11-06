@@ -35,8 +35,12 @@ def get_engine():
     if production and not raw:
         raise RuntimeError("DATABASE_URL is required in production. Use persistent PostgreSQL.")
     if not raw:
-        path = Path(__file__).resolve().parent.parent / "data" / "chess.db"
-        path.parent.mkdir(exist_ok=True)
+        if os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+            import tempfile
+            path = Path(tempfile.gettempdir()) / "chess.db"
+        else:
+            path = Path(__file__).resolve().parent.parent / "data" / "chess.db"
+            path.parent.mkdir(exist_ok=True)
         raw = f"sqlite:///{path.as_posix()}"
     if raw.startswith("postgres://"):
         raw = raw.replace("postgres://", "postgresql+psycopg://", 1)
