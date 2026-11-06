@@ -1,0 +1,12 @@
+.git
+.env
+.env.*
+.qa
+.pytest_cache
+data
+tests
+docs
+cloudflared.exe
+*.bat
+**/__pycache__
+**/*.pyc

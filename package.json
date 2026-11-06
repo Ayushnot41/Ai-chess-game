@@ -2,7 +2,6 @@
   "name": "grandmaster-ai",
   "private": true,
   "scripts": {
-    "build": "echo 'Static 3D chess platform assets ready in frontend/'",
     "test:browser": "node tests/browser_game.cjs"
   }
 }

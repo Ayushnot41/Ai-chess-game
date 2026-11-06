@@ -1,19 +1,21 @@
 {
-  "buildCommand": "echo 'Static 3D chess assets ready in frontend/'",
-  "outputDirectory": "frontend",
-  "functions": {
-    "api/index.py": {
-      "includeFiles": "backend/**"
-    }
-  },
+  "version": 2,
   "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.py"
+    },
     {
       "source": "/api",
       "destination": "/api/index.py"
     },
     {
-      "source": "/api/(.*)",
-      "destination": "/api/index.py"
+      "source": "/assets/(.*)",
+      "destination": "/assets/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/frontend/$1"
     }
   ]
 }
