@@ -1,0 +1,46 @@
+{
+  "project_id": "proj_grandmaster_ai_3d_chess",
+  "project_name": "Grandmaster-AI 3D Chess Platform",
+  "version": "2.4.0",
+  "design_system": {
+    "id": "ds_grandmaster_obsidian_stitch_v1",
+    "name": "Obsidian Grandmaster Stitch System",
+    "framework": "Google Stitch UI Specification",
+    "tokens": {
+      "spatial_scale": "24-step modular scale (4px to 96px)",
+      "color_tokens": {
+        "--bg-canvas": "#070a12",
+        "--bg-surface-glass": "rgba(15, 23, 42, 0.72)",
+        "--bg-card-elevated": "rgba(30, 41, 59, 0.85)",
+        "--border-glass": "rgba(255, 255, 255, 0.08)",
+        "--border-focus": "#38bdf8",
+        "--accent-primary": "#2563eb",
+        "--accent-emerald": "#10b981",
+        "--accent-gold": "#f59e0b",
+        "--accent-ruby": "#ef4444",
+        "--accent-cyan": "#06b6d4",
+        "--text-primary": "#f8fafc",
+        "--text-secondary": "#94a3b8",
+        "--text-muted": "#64748b"
+      },
+      "motion": {
+        "spring_gentle": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "spring_bouncy": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+        "duration_quick": "180ms",
+        "duration_smooth": "320ms"
+      }
+    },
+    "screens": [
+      {
+        "id": "screen_main_3d_arena",
+        "name": "Grandmaster 3D Arena Viewport",
+        "template": "full_viewport_threejs_hud"
+      },
+      {
+        "id": "screen_kids_friendly_hud",
+        "name": "Child-Friendly Assisted Play HUD",
+        "template": "accessible_cards_with_smart_actions"
+      }
+    ]
+  }
+}

@@ -381,8 +381,12 @@ class Board3D {
 
     showMoveIndicators(squares) {
         this.clearIndicators();
-        const indicatorGeom = new THREE.RingGeometry(0.12, 0.24, 32);
-        indicatorGeom.rotateX(-Math.PI / 2);
+        // High-visibility friendly indicators: Ring for captures, solid soft disc for free moves
+        const freeGeom = new THREE.CircleGeometry(0.22, 32);
+        freeGeom.rotateX(-Math.PI / 2);
+
+        const captureGeom = new THREE.RingGeometry(0.25, 0.44, 32);
+        captureGeom.rotateX(-Math.PI / 2);
 
         squares.forEach(sq => {
             const coords = this.squareToCoords(sq);
@@ -391,11 +395,11 @@ class Board3D {
             const mat = new THREE.MeshBasicMaterial({
                 color: isTargetEnemy ? 0xef4444 : 0x10b981,
                 transparent: true,
-                opacity: 0.75,
+                opacity: isTargetEnemy ? 0.85 : 0.70,
                 side: THREE.DoubleSide
             });
 
-            const mesh = new THREE.Mesh(indicatorGeom, mat);
+            const mesh = new THREE.Mesh(isTargetEnemy ? captureGeom : freeGeom, mat);
             mesh.position.set(coords.x, 0.13, coords.z);
             this.scene.add(mesh);
             this.indicators.push(mesh);

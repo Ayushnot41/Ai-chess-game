@@ -31,12 +31,15 @@
         </div>
 
         <div class="header-actions">
+            <!-- Child-Friendly Mode Toggle -->
+            <button id="btn-kid-mode" class="btn-secondary" style="border-color: #f59e0b; color: #fbbf24;" title="Toggle Child-Friendly Simple Play with Visual Coaching">⭐ Kid Friendly: ON</button>
+
             <!-- Difficulty Selector -->
             <select id="select-difficulty" class="select-input" title="AI Search Depth">
-                <option value="1">Novice (Depth 1)</option>
-                <option value="3">Club Player (Depth 3)</option>
-                <option value="4" selected>Tournament Master (Depth 4)</option>
-                <option value="5">Grandmaster (Depth 5)</option>
+                <option value="1">🐣 Kid Friendly (Fun & Easy)</option>
+                <option value="2">🎓 Casual Player (Depth 2)</option>
+                <option value="4" selected>⚔️ Tournament Pro (Depth 4)</option>
+                <option value="5">👑 Grandmaster IIT (Depth 5)</option>
             </select>
 
             <!-- Board Theme Selector -->
@@ -98,8 +101,9 @@
                     <button class="btn-secondary" data-view="black">Black POV</button>
                 </div>
 
-                <button id="btn-hint" class="btn-secondary" title="Predict AI Best Move & Show 3D Arrow">💡 Move Hint</button>
-                <button id="btn-undo" class="btn-secondary" title="Retract Last Move">↩ Undo</button>
+                <button id="btn-auto-move" class="btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);" title="Help me play the best move!">⚡ Play Best Move</button>
+                <button id="btn-hint" class="btn-secondary" title="Show AI Best Move 3D Arrow">💡 Hint</button>
+                <button id="btn-undo" class="btn-secondary" title="Oops! Take back move">↩ Undo</button>
                 <button id="btn-heatmap" class="btn-secondary" title="Toggle 3D Square Dominance Heatmap">🔥 Heatmap</button>
             </div>
         </section>
@@ -220,6 +224,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Confetti Particle Celebration Canvas for Kid Friendly Mode -->
+    <canvas id="confetti-canvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99;"></canvas>
 
     <!-- Application Scripts -->
     <script src="js/audio.js"></script>

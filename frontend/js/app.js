@@ -13,6 +13,8 @@ class ChessApp {
         this.selectedSquare = null;
         this.history = [];
         this.heatmapVisible = false;
+        this.kidMode = true;
+        this.confettiParticles = [];
 
         this.init();
     }
@@ -27,6 +29,9 @@ class ChessApp {
             playerColor: this.playerColor,
             onSquareClick: (sq) => this.handleSquareClick(sq)
         });
+
+        // Initialize Confetti Canvas
+        this.initConfetti();
 
         // Bind DOM elements
         this.bindEvents();
@@ -44,6 +49,17 @@ class ChessApp {
         document.getElementById('btn-undo').addEventListener('click', () => this.undoMove());
         document.getElementById('btn-heatmap').addEventListener('click', () => this.toggleHeatmap());
         document.getElementById('btn-sound').addEventListener('click', () => this.toggleSound());
+
+        // Kid Friendly & Auto-Play Controls
+        const btnKidMode = document.getElementById('btn-kid-mode');
+        if (btnKidMode) {
+            btnKidMode.addEventListener('click', () => this.toggleKidMode());
+        }
+
+        const btnAutoMove = document.getElementById('btn-auto-move');
+        if (btnAutoMove) {
+            btnAutoMove.addEventListener('click', () => this.playBestMoveForPlayer());
+        }
 
         // Camera Views
         document.querySelectorAll('[data-view]').forEach(btn => {
@@ -202,7 +218,18 @@ class ChessApp {
             return;
         }
 
-        const moveUci = aiResponse.best_move_uci;
+        let moveUci = aiResponse.best_move_uci;
+        // In Kid-Friendly Level 1, play gentle moves to let kids have fun & win
+        if (this.aiDepth === 1 && Math.random() < 0.55) {
+            const legalMoves = this.chess.moves({ verbose: true });
+            const quietMoves = legalMoves.filter(m => !m.captured);
+            const pool = quietMoves.length > 0 ? quietMoves : legalMoves;
+            if (pool.length > 0) {
+                const randomChoice = pool[Math.floor(Math.random() * pool.length)];
+                moveUci = randomChoice.from + randomChoice.to + (randomChoice.promotion || '');
+            }
+        }
+
         const fromSq = moveUci.substring(0, 2);
         const toSq = moveUci.substring(2, 4);
         const promo = moveUci.length > 4 ? moveUci[4] : null;
@@ -306,7 +333,20 @@ class ChessApp {
         }
 
         if (commentaryText) {
-            commentaryText.innerHTML = best.explanation;
+            if (this.kidMode) {
+                // Friendly kid-mode translations
+                let friendlyTip = `⭐ <b>Coach Tip:</b> Move your piece to <b>${best.to_square.toUpperCase()}</b>!`;
+                if (best.motifs && best.motifs.length > 0) {
+                    const m = best.motifs[0].toLowerCase();
+                    if (m.includes('capture')) friendlyTip = `⚔️ <b>Awesome move!</b> Capture the enemy piece on ${best.to_square.toUpperCase()}!`;
+                    else if (m.includes('check')) friendlyTip = `👑 <b>Attack the King!</b> Deliver check on ${best.to_square.toUpperCase()}!`;
+                    else if (m.includes('fork')) friendlyTip = `🌟 <b>Super Double Attack!</b> Threaten two pieces at once!`;
+                    else if (m.includes('center')) friendlyTip = `🚀 <b>Central Control!</b> Jump into the powerful center of the board!`;
+                }
+                commentaryText.innerHTML = `${friendlyTip}<br><span style="font-size: 11px; color: #94a3b8;">Click <b>⚡ Play Best Move</b> below if you want help!</span>`;
+            } else {
+                commentaryText.innerHTML = best.explanation;
+            }
         }
 
         if (candidatesContainer) {
@@ -375,6 +415,121 @@ class ChessApp {
         const isEnabled = window.soundEngine.toggle();
         const btn = document.getElementById('btn-sound');
         btn.innerText = isEnabled ? '🔊 Sound: ON' : '🔇 Sound: OFF';
+    }
+
+    toggleKidMode() {
+        this.kidMode = !this.kidMode;
+        const btn = document.getElementById('btn-kid-mode');
+        if (btn) {
+            btn.innerText = this.kidMode ? '⭐ Kid Friendly: ON' : '⚙️ Kid Friendly: OFF';
+            btn.style.color = this.kidMode ? '#fbbf24' : '#94a3b8';
+            btn.style.borderColor = this.kidMode ? '#f59e0b' : 'rgba(255, 255, 255, 0.1)';
+        }
+        this.requestPredictions();
+    }
+
+    async playBestMoveForPlayer() {
+        if (this.isAiThinking || this.chess.game_over()) return;
+        const currentTurnColor = this.chess.turn() === 'w' ? 'white' : 'black';
+        if (currentTurnColor !== this.playerColor) return;
+
+        this.setAiStatus(true, "AI Coach is playing optimal move for you...");
+        const pred = await window.chessAPI.predict(this.chess.fen(), 1, 3);
+        if (!pred || !pred.candidates || pred.candidates.length === 0) {
+            this.setAiStatus(false, "No legal moves.");
+            return;
+        }
+
+        const best = pred.candidates[0];
+        const fromSq = best.from_square;
+        const toSq = best.to_square;
+        const promo = best.move_uci.length > 4 ? best.move_uci[4] : 'q';
+
+        const moveAttempt = this.chess.move({
+            from: fromSq,
+            to: toSq,
+            promotion: promo
+        });
+
+        if (moveAttempt) {
+            this.history.push({
+                san: moveAttempt.san,
+                from: fromSq,
+                to: toSq,
+                fen: this.chess.fen()
+            });
+
+            this.board3D.clearIndicators();
+            this.board3D.clearPredictedArrow();
+
+            if (moveAttempt.captured) {
+                this.triggerConfetti();
+            }
+
+            this.board3D.animateMove(fromSq, toSq, moveAttempt.promotion, () => {
+                this.onMoveExecuted(moveAttempt);
+            });
+        }
+    }
+
+    initConfetti() {
+        const canvas = document.getElementById('confetti-canvas');
+        if (!canvas) return;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        const ctx = canvas.getContext('2d');
+        const loop = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = this.confettiParticles.length - 1; i >= 0; i--) {
+                const p = this.confettiParticles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.15; // Gravity
+                p.rotation += p.vRot;
+                p.life -= 0.012;
+
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation);
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = Math.max(0, p.life);
+                ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 1.4);
+                ctx.restore();
+
+                if (p.life <= 0) {
+                    this.confettiParticles.splice(i, 1);
+                }
+            }
+            requestAnimationFrame(loop);
+        };
+        requestAnimationFrame(loop);
+    }
+
+    triggerConfetti() {
+        const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6', '#38bdf8'];
+        const startX = window.innerWidth / 2;
+        const startY = window.innerHeight * 0.45;
+
+        for (let i = 0; i < 70; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 8 + 3;
+            this.confettiParticles.push({
+                x: startX,
+                y: startY,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 4,
+                rotation: Math.random() * Math.PI,
+                vRot: (Math.random() - 0.5) * 0.2,
+                size: Math.random() * 8 + 5,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                life: 1.0
+            });
+        }
     }
 
     renderMoveHistory() {

@@ -137,6 +137,7 @@ class MovePredictor:
 
     def predict_candidates(self, board: chess.Board, top_k: int = 3, depth: int = 3) -> list[dict]:
         """Evaluates and ranks top-K candidate moves with explanations."""
+        import time
         legal_moves = list(board.legal_moves)
         if not legal_moves:
             return []
@@ -144,10 +145,16 @@ class MovePredictor:
         candidates = []
         turn_factor = 1 if board.turn == chess.WHITE else -1
 
+        # Reset search limits for clean evaluation
+        self.search.reset_stats()
+        self.search.start_time = time.time()
+        self.search.time_limit = 4.0
+        self.search.stop_search = False
+
         for move in legal_moves:
             board.push(move)
             # Search after this move from opponent perspective
-            score = -self.search.negamax(board, depth - 1, -999999, 999999, 1)
+            score = -self.search.negamax(board, max(0, depth - 1), -999999, 999999, 1)
             board.pop()
 
             eval_white = score * turn_factor

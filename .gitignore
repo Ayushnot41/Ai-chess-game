@@ -53,3 +53,7 @@ Thumbs.db
 
 # Git lock files
 *.lock
+
+# Executables & Cloudflare Tunnel
+*.exe
+cloudflared*
