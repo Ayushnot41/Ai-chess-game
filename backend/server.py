@@ -94,6 +94,7 @@ app = FastAPI(
     title="Grandmaster-AI Engine API",
     description="Next-Generation 3D Chess Game and Move Predictor Service",
     version="2.0.0",
+    redirect_slashes=False,
 )
 
 # CORS setup for web clients (wildcard regex fallback supports Cloudflare, Render, Localhost with credentials)

@@ -171,7 +171,7 @@ class GoogleCredential(BaseModel):
 
 @router.get("/auth/config")
 def auth_config():
-    client_id = os.getenv("GOOGLE_CLIENT_ID", "")
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
     return {
         "google_enabled": bool(client_id),
         "google_client_id": client_id,
@@ -180,7 +180,7 @@ def auth_config():
 
 @router.post("/auth/google", dependencies=[Depends(csrf_guard)])
 def google_auth(body: GoogleCredential, request: Request, response: Response):
-    client_id = os.getenv("GOOGLE_CLIENT_ID", "")
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
     import httpx
     try:
         res = httpx.get(
@@ -195,7 +195,7 @@ def google_auth(body: GoogleCredential, request: Request, response: Response):
         raise HTTPException(401, "Invalid or expired Google token.")
 
     data = res.json()
-    if client_id and data.get("aud") != client_id:
+    if client_id and data.get("aud") != client_id and data.get("azp") != client_id:
         raise HTTPException(401, "Google token audience mismatch.")
 
     sub = data.get("sub")
@@ -233,6 +233,82 @@ def google_auth(body: GoogleCredential, request: Request, response: Response):
             "provider": "google",
         }
     }
+
+
+@router.get("/auth/google/callback")
+def google_callback(request: Request):
+    from fastapi.responses import RedirectResponse
+    code = request.query_params.get("code")
+    if not code:
+        error = request.query_params.get("error", "Access denied by Google.")
+        return RedirectResponse(url=f"/?auth_error={error}", status_code=303)
+
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+    client_secret = os.getenv("GOOGLE_CLIENT_SECRET", "").strip()
+    base_url = str(request.base_url).rstrip("/")
+    redirect_uri = f"{base_url}/api/auth/google/callback"
+
+    import httpx
+    try:
+        token_res = httpx.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "code": code,
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "redirect_uri": redirect_uri,
+                "grant_type": "authorization_code",
+            },
+            timeout=10.0,
+        )
+    except Exception as e:
+        return RedirectResponse(url="/?auth_error=google_connection_failed", status_code=303)
+
+    if token_res.status_code != 200:
+        return RedirectResponse(url="/?auth_error=token_exchange_failed", status_code=303)
+
+    token_data = token_res.json()
+    id_token = token_data.get("id_token")
+    if not id_token:
+        return RedirectResponse(url="/?auth_error=missing_id_token", status_code=303)
+
+    try:
+        info_res = httpx.get("https://oauth2.googleapis.com/tokeninfo", params={"id_token": id_token}, timeout=8.0)
+    except Exception:
+        return RedirectResponse(url="/?auth_error=google_tokeninfo_failed", status_code=303)
+
+    if info_res.status_code != 200:
+        return RedirectResponse(url="/?auth_error=invalid_token", status_code=303)
+
+    data = info_res.json()
+    sub = data.get("sub")
+    if not sub:
+        return RedirectResponse(url="/?auth_error=invalid_profile", status_code=303)
+
+    user_id = f"g_{sub[:28]}"
+    raw_name = data.get("name") or data.get("email", "").split("@")[0] or "player"
+    import re
+    clean_name = re.sub(r"[^a-zA-Z0-9_]", "", raw_name)[:18] or "google_user"
+
+    response = RedirectResponse(url="/?signed_in=google", status_code=303)
+    with get_engine().begin() as connection:
+        existing = connection.execute(select(users).where(users.c.id == user_id)).mappings().first()
+        if existing:
+            username = existing["username"]
+        else:
+            candidate_username = clean_name
+            while connection.execute(select(users).where(users.c.username == candidate_username)).mappings().first():
+                candidate_username = f"{clean_name[:16]}_{secrets.token_hex(2)}"
+            username = candidate_username
+            connection.execute(users.insert().values(
+                id=user_id,
+                username=username,
+                password_hash="oauth:google",
+                created_at=int(time.time()),
+            ))
+        new_session(connection, response, user_id, request.cookies.get(COOKIE))
+
+    return response
 
 
 @router.get("/auth/me")

@@ -15,7 +15,23 @@ class ChessAccount {
         document.getElementById('account-load').addEventListener('click', () => this.load());
         this.googleConfig = null;
         this.checkSession();
+        this.handleUrlAuth();
         this.initGoogleAuth();
+    }
+    handleUrlAuth() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('signed_in') === 'google') {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            this.checkSession().then(() => {
+                if (this.user) {
+                    this.message.textContent = `Successfully signed in with Google as ${this.user.name || this.user.username}!`;
+                }
+            });
+        } else if (params.get('auth_error')) {
+            const err = params.get('auth_error');
+            window.history.replaceState({}, document.title, window.location.pathname);
+            this.message.textContent = `Google sign-in status: ${err.replace(/_/g, ' ')}. You can also sign in below.`;
+        }
     }
     async request(path, method='GET', payload) {
         const controller = new AbortController();
@@ -150,30 +166,57 @@ class ChessAccount {
         }
     }
     renderGoogleButton() {
-        if (!window.google?.accounts?.id || !this.googleConfig?.google_client_id) return;
+        if (!this.googleConfig?.google_client_id) return;
         const target = document.getElementById('google-signin-btn');
         if (!target) return;
-        window.google.accounts.id.initialize({
-            client_id: this.googleConfig.google_client_id,
-            callback: response => this.handleGoogleCredential(response),
-            auto_select: false,
-            cancel_on_tap_outside: true
-        });
-        target.replaceChildren();
-        window.google.accounts.id.renderButton(target, {
-            theme: 'filled_black',
-            size: 'large',
-            text: 'continue_with',
-            shape: 'pill',
-            width: 280
-        });
-        if (!this.user) {
+
+        if (window.google?.accounts?.id) {
             try {
-                window.google.accounts.id.prompt();
+                window.google.accounts.id.initialize({
+                    client_id: this.googleConfig.google_client_id,
+                    callback: response => this.handleGoogleCredential(response),
+                    auto_select: false,
+                    cancel_on_tap_outside: true
+                });
+                target.replaceChildren();
+                window.google.accounts.id.renderButton(target, {
+                    theme: 'filled_black',
+                    size: 'large',
+                    text: 'continue_with',
+                    shape: 'pill',
+                    width: 280
+                });
+                if (!this.user) {
+                    try { window.google.accounts.id.prompt(); } catch {}
+                }
             } catch {
-                // One Tap may be suppressed if third-party cookies are blocked or origin not allowed
+                this.renderDirectGoogleFallback(target);
             }
+        } else {
+            this.renderDirectGoogleFallback(target);
         }
+    }
+    renderDirectGoogleFallback(target) {
+        target.replaceChildren();
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn-secondary';
+        btn.style.cssText = 'width: 280px; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 16px; border-radius: 9999px; background: #18181b; border: 1px solid #3f3f46; color: #fff; font-weight: 500; cursor: pointer;';
+        btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> <span>Continue with Google</span>`;
+        btn.addEventListener('click', () => this.launchDirectGoogleOAuth());
+        target.appendChild(btn);
+    }
+    launchDirectGoogleOAuth() {
+        if (!this.googleConfig?.google_client_id) return;
+        const redirectUri = window.location.origin + '/api/auth/google/callback';
+        const url = `https://accounts.google.com/o/oauth2/v2/auth?` +
+            `client_id=${encodeURIComponent(this.googleConfig.google_client_id)}&` +
+            `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+            `response_type=code&` +
+            `scope=${encodeURIComponent('openid email profile')}&` +
+            `access_type=online&` +
+            `prompt=select_account`;
+        window.location.href = url;
     }
     async handleGoogleCredential(response) {
         if (!response?.credential) return;

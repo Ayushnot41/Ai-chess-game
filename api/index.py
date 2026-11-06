@@ -33,16 +33,20 @@ class VercelPathMiddleware:
             headers = dict(scope.get("headers", []))
             matched_path = headers.get(b"x-matched-path", b"").decode("utf-8", "ignore")
 
+            target_path = path
             if matched_path and matched_path.startswith("/api/"):
-                scope["path"] = matched_path
+                target_path = matched_path
             elif path.startswith("/api/index.py"):
                 remainder = path[len("/api/index.py"):]
-                scope["path"] = "/api" + remainder if remainder.startswith("/") else ("/api/" + remainder if remainder else "/api/status")
+                target_path = "/api" + remainder if remainder.startswith("/") else ("/api/" + remainder if remainder else "/api/status")
             elif path.startswith("/index.py"):
                 remainder = path[len("/index.py"):]
-                scope["path"] = "/api" + remainder if remainder.startswith("/") else ("/api/" + remainder if remainder else "/api/status")
+                target_path = "/api" + remainder if remainder.startswith("/") else ("/api/" + remainder if remainder else "/api/status")
             elif not path.startswith("/api/") and not path.startswith("/docs") and not path.startswith("/openapi"):
-                scope["path"] = f"/api{path}"
+                target_path = f"/api{path}"
+
+            scope["path"] = target_path
+            scope["raw_path"] = target_path.encode("utf-8")
 
         await self.app(scope, receive, send)
 
