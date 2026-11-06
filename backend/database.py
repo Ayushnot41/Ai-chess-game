@@ -59,10 +59,14 @@ def get_engine():
         options["connect_args"] = {"connect_timeout": 10}
     engine = create_engine(url, **options)
     if url.get_backend_name() == "sqlite":
+        is_serverless = bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
         @event.listens_for(engine, "connect")
         def configure_sqlite(connection, _):
             connection.execute("PRAGMA foreign_keys=ON")
-            connection.execute("PRAGMA journal_mode=WAL")
+            if not is_serverless:
+                connection.execute("PRAGMA journal_mode=WAL")
+            else:
+                connection.execute("PRAGMA journal_mode=DELETE")
     metadata.create_all(engine)
     return engine
 

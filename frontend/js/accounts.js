@@ -13,7 +13,9 @@ class ChessAccount {
         document.getElementById('account-logout').addEventListener('click', () => this.logout());
         document.getElementById('account-save').addEventListener('click', () => this.save());
         document.getElementById('account-load').addEventListener('click', () => this.load());
+        this.googleConfig = null;
         this.checkSession();
+        this.initGoogleAuth();
     }
     async request(path, method='GET', payload) {
         const controller = new AbortController();
@@ -121,6 +123,58 @@ class ChessAccount {
             this.message.textContent='Account game loaded.';
         } catch (error) { this.message.textContent=error.message; }
         finally { this.setBusy(false); }
+    }
+    async initGoogleAuth() {
+        try {
+            const config = await this.request('auth/config');
+            this.googleConfig = config;
+            if (config?.google_enabled) {
+                const interval = setInterval(() => {
+                    if (window.google?.accounts?.id) {
+                        clearInterval(interval);
+                        this.renderGoogleButton();
+                    }
+                }, 100);
+                setTimeout(() => clearInterval(interval), 10000);
+            } else {
+                const container = document.getElementById('google-auth-container');
+                if (container) container.style.display = 'none';
+            }
+        } catch {
+            const container = document.getElementById('google-auth-container');
+            if (container) container.style.display = 'none';
+        }
+    }
+    renderGoogleButton() {
+        if (!window.google?.accounts?.id || !this.googleConfig?.google_client_id) return;
+        const target = document.getElementById('google-signin-btn');
+        if (!target) return;
+        window.google.accounts.id.initialize({
+            client_id: this.googleConfig.google_client_id,
+            callback: response => this.handleGoogleCredential(response),
+            auto_select: false
+        });
+        target.replaceChildren();
+        window.google.accounts.id.renderButton(target, {
+            theme: 'filled_black',
+            size: 'large',
+            text: 'continue_with',
+            shape: 'pill',
+            width: 280
+        });
+    }
+    async handleGoogleCredential(response) {
+        if (!response?.credential) return;
+        this.message.textContent = 'Verifying Google account…';
+        try {
+            const data = await this.request('auth/google', 'POST', { credential: response.credential });
+            this.user = data.user;
+            this.message.textContent = '';
+            this.render();
+            document.getElementById('account-username-display').textContent = this.user.name || this.user.username;
+        } catch (error) {
+            this.message.textContent = error.message || 'Google sign-in failed.';
+        }
     }
 }
 window.ChessAccount = ChessAccount;

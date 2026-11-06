@@ -2,7 +2,7 @@
   "project_metadata": {
     "project_name": "Grandmaster-AI",
     "display_name": "Grandmaster-AI: Next-Generation 3D Chess Game & Move Predictor Engine",
-    "version": "2.7.0",
+    "version": "2.8.0",
     "authors": [
       {
         "name": "Ayush",
@@ -15,6 +15,7 @@
     "license": "MIT",
     "technologies": {
       "backend": ["Python 3.13", "FastAPI", "Uvicorn", "python-chess", "Pytest", "SQLAlchemy", "Vercel Serverless ASGI"],
+      "authentication": ["Google Identity Services OAuth 2.0", "Scrypt Password Hashing", "HttpOnly Lax Session Cookies", "CSRF Host Shield"],
       "algorithms": [
         "Negamax Minimax Search",
         "Alpha-Beta Pruning",
@@ -98,6 +99,13 @@
       "raw_text": "Tell me how can I deploy all the links as live as a one link. Can I deploy it on Vercel? If possible, tell me the process on how can I deploy it in Vercel step by step with very easy language.",
       "intent": "Architect unified single-domain deployment for Vercel: create api/index.py serverless entrypoint, configure vercel.json routing rewrites, add 1-click deploy button and clear step-by-step documentation.",
       "status": "COMPLETED"
+    },
+    {
+      "prompt_id": "UP-009",
+      "timestamp": "2026-11-06T19:42:13+05:30",
+      "raw_text": "Can I apply Google authentication on it? Tell me if I previously in the other project searched about it, I applied the Google authentication, so can I need new project for Google Cloud for new authentication? And if already the authentication is existing in my left side project folders, if using this, can you adding the Google authentication on it? I also added the Vercel MCP to you, so check on Vercel. I deployed it on Vercel, but the website cannot be live. Check the issues and find the issues on Vercel. Fix them entirely so that they cannot be opened for further, because I also integrated the Vercel MCP to you, so now you have the full access on it.",
+      "intent": "Implement Google Identity Services authentication across frontend and backend, resolve Vercel deployment blockers (missing build script in package.json, outputDirectory mapping, serverless SQLite WAL lockup, and psycopg bundle size).",
+      "status": "COMPLETED"
     }
   ],
   "architecture_and_changes_summary": [
@@ -179,6 +187,18 @@
       ],
       "technical_details": "Configured Vercel Serverless ASGI integration bridging FastAPI REST endpoints and the Three.js WebGL static frontend into a single unified origin (e.g. https://ai-chess-game.vercel.app), eliminating CORS overhead and proxy boundaries.",
       "test_coverage": "12 registered FastAPI routes verified via api.index import test."
+    },
+    {
+      "phase": "Phase 7 - Google Authentication Integration & Vercel Production Hardening",
+      "modules_created": [
+        "backend/accounts.py",
+        "frontend/index.html",
+        "frontend/js/accounts.js",
+        "frontend/assets/*",
+        "tests/test_accounts.py"
+      ],
+      "technical_details": "Integrated Google Identity Services OAuth 2.0 flow with /api/auth/google token verification. Reused existing Google Cloud credentials from sibling AegisBay project without needing a new Google Cloud project. Resolved Vercel deployment root cause: specified outputDirectory as frontend, added build script to package.json, streamlined requirements.txt, and configured DELETE SQLite journal mode on serverless.",
+      "test_coverage": "47 unit and regression test cases passing with exit code 0."
     }
   ],
   "how_to_modify_guide": {
@@ -186,6 +206,11 @@
       "file": "backend/server.py",
       "parameter": "MoveRequest.depth",
       "explanation": "Depth 1 is super gentle for young children; Depth 3 is suitable for casual club players; Depth 4-5 is master/grandmaster tournament strength."
+    },
+    "configure_google_authentication": {
+      "file": ".env or Vercel Environment Variables",
+      "parameter": "GOOGLE_CLIENT_ID",
+      "explanation": "Paste your existing OAuth 2.0 Client ID from AegisBay or Google Cloud Console (e.g. xxxxx.apps.googleusercontent.com). In Google Cloud Console, add your Vercel URL to Authorized JavaScript origins."
     },
     "customize_piece_materials": {
       "file": "frontend/js/models.js",

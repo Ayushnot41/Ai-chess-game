@@ -165,6 +165,76 @@ def login(body: Credentials, request: Request, response: Response):
     return {"user": {"username": user["username"]}}
 
 
+class GoogleCredential(BaseModel):
+    credential: str = Field(min_length=16, max_length=4096)
+
+
+@router.get("/auth/config")
+def auth_config():
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "")
+    return {
+        "google_enabled": bool(client_id),
+        "google_client_id": client_id,
+    }
+
+
+@router.post("/auth/google", dependencies=[Depends(csrf_guard)])
+def google_auth(body: GoogleCredential, request: Request, response: Response):
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "")
+    import httpx
+    try:
+        res = httpx.get(
+            "https://oauth2.googleapis.com/tokeninfo",
+            params={"id_token": body.credential},
+            timeout=8.0,
+        )
+    except Exception as e:
+        raise HTTPException(502, "Failed to contact Google identity servers.") from e
+
+    if res.status_code != 200:
+        raise HTTPException(401, "Invalid or expired Google token.")
+
+    data = res.json()
+    if client_id and data.get("aud") != client_id:
+        raise HTTPException(401, "Google token audience mismatch.")
+
+    sub = data.get("sub")
+    if not sub:
+        raise HTTPException(401, "Invalid Google profile.")
+
+    user_id = f"g_{sub[:28]}"
+    raw_name = data.get("name") or data.get("email", "").split("@")[0] or "player"
+    import re
+    clean_name = re.sub(r"[^a-zA-Z0-9_]", "", raw_name)[:18] or "google_user"
+
+    with get_engine().begin() as connection:
+        existing = connection.execute(select(users).where(users.c.id == user_id)).mappings().first()
+        if existing:
+            username = existing["username"]
+        else:
+            candidate_username = clean_name
+            while connection.execute(select(users).where(users.c.username == candidate_username)).mappings().first():
+                candidate_username = f"{clean_name[:16]}_{secrets.token_hex(2)}"
+            username = candidate_username
+            connection.execute(users.insert().values(
+                id=user_id,
+                username=username,
+                password_hash="oauth:google",
+                created_at=int(time.time()),
+            ))
+        new_session(connection, response, user_id, request.cookies.get(COOKIE))
+
+    return {
+        "user": {
+            "username": username,
+            "name": data.get("name", username),
+            "email": data.get("email", ""),
+            "picture": data.get("picture", ""),
+            "provider": "google",
+        }
+    }
+
+
 @router.get("/auth/me")
 def me(user=Depends(current_user)):
     return {"user": {"username": user["username"]}}
@@ -183,7 +253,7 @@ class SaveGame(BaseModel):
     initialFen: str = Field(max_length=120)
     moves: list[str] = Field(max_length=1000)
     playerColor: Literal["white", "black"]
-    aiDepth: Literal[1, 2, 4, 5]
+    aiDepth: Literal[1, 2, 3, 4, 5]
     kidMode: bool = True
     theme: Literal["wood", "marble", "cyberpunk", "gold"] = "wood"
     expected_revision: str | None = Field(default=None, max_length=32)

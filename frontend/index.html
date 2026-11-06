@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -14,6 +14,9 @@
     <!-- CSS -->
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/play.css">
+
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <!-- Dependencies -->
     <script src="vendor/three.min.js"></script>
@@ -206,6 +209,16 @@
             <h2 id="account-title" class="modal-title">Welcome back</h2>
             <p class="modal-desc">Play as a guest anytime. An account lets you keep a private game and continue on another device.</p>
             <p id="account-message" role="status" aria-live="polite"></p>
+
+            <!-- Google One-Click Authentication Container -->
+            <div id="google-auth-container" style="margin: 14px 0 16px; text-align: center;">
+                <div id="google-signin-btn" style="display: flex; justify-content: center; min-height: 44px;"></div>
+                <div id="google-auth-divider" style="display: flex; align-items: center; text-align: center; margin: 16px 0; color: #64748b; font-size: 12px;">
+                    <span style="flex: 1; border-bottom: 1px solid #334155;"></span>
+                    <span style="padding: 0 10px;">or continue with password</span>
+                    <span style="flex: 1; border-bottom: 1px solid #334155;"></span>
+                </div>
+            </div>
             <form id="account-form">
                 <label class="form-label" for="account-username">Username</label>
                 <input id="account-username" class="input-text" autocomplete="username" required minlength="3" maxlength="24" pattern="[a-zA-Z0-9_]+" aria-describedby="username-help">

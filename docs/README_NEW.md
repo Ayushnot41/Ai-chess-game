@@ -16,7 +16,7 @@ Current setup and verified behavior: [Engineering handoff](docs/HANDOFF.md). Sou
 [![Python](https://img.shields.io/badge/Python-3.13%2B-blue.svg?logo=python)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com)
 [![Three.js](https://img.shields.io/badge/Three.js-r128-black.svg?logo=three.js)](https://threejs.org)
-[![Tests](https://img.shields.io/badge/Tests-36%20Passed-10b981.svg)](https://pytest.org)
+[![Tests](https://img.shields.io/badge/Tests-47%20Passed-10b981.svg)](https://pytest.org)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FAyushnot41%2FAi-chess-game)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-trycloudflare.com-success.svg)](https://translated-goto-cost-verification.trycloudflare.com)
@@ -53,6 +53,26 @@ vercel --prod
 ```
 - Press Enter to confirm defaults.
 - Vercel automatically uploads the project and prints your unified live link directly in PowerShell!
+
+---
+
+## 🔐 Google One-Click Authentication Setup
+
+Grandmaster-AI natively supports **Google One-Click Sign-In** via Google Identity Services OAuth 2.0.
+
+### Reusing Your Existing Google Cloud Project (Zero Extra Setup)
+You **do not need to create a new Google Cloud project**. You can reuse the Google Cloud project from your existing projects (such as AegisBay):
+1. Open [Google Cloud Console Credentials](https://console.cloud.google.com/apis/credentials).
+2. Select your existing project and click your **OAuth 2.0 Client ID** (Web application).
+3. Under **Authorized JavaScript origins**, click **Add URI** and enter:
+   - `http://localhost:8000` (for local development)
+   - `https://your-project.vercel.app` (your Vercel single link)
+4. Copy your Client ID (e.g. `xxxxxxxxxxxx-xxxxxxxx.apps.googleusercontent.com`).
+5. Add it to your `.env` or set it in **Vercel Project Settings -> Environment Variables**:
+   ```env
+   GOOGLE_CLIENT_ID=xxxxxxxxxxxx-xxxxxxxx.apps.googleusercontent.com
+   ```
+6. The account modal in Grandmaster-AI automatically reveals the **"Sign in with Google"** button!
 
 ---
 

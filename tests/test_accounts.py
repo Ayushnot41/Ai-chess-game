@@ -118,3 +118,38 @@ def test_production_fails_without_persistent_database(monkeypatch):
 def test_secure_cookie_flag(account_client, monkeypatch):
     monkeypatch.setenv("COOKIE_SECURE","true")
     assert "Secure" in register(account_client).headers["set-cookie"]
+
+
+def test_auth_config_reports_google_status(account_client, monkeypatch):
+    monkeypatch.delenv("GOOGLE_CLIENT_ID", raising=False)
+    assert account_client.get("/api/auth/config").json() == {"google_enabled": False, "google_client_id": ""}
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "test-client-id-123.apps.googleusercontent.com")
+    assert account_client.get("/api/auth/config").json() == {
+        "google_enabled": True,
+        "google_client_id": "test-client-id-123.apps.googleusercontent.com",
+    }
+
+
+def test_google_auth_success_and_session(account_client, monkeypatch):
+    import httpx
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "test-client-id-123")
+
+    class MockResponse:
+        status_code = 200
+        def json(self):
+            return {
+                "iss": "https://accounts.google.com",
+                "sub": "109876543210987654321",
+                "aud": "test-client-id-123",
+                "email": "ayush@example.com",
+                "name": "Ayush Sarkar",
+                "picture": "https://example.com/avatar.jpg"
+            }
+
+    monkeypatch.setattr(httpx, "get", lambda *args, **kwargs: MockResponse())
+    response = account_client.post("/api/auth/google", json={"credential": "mock-valid-google-id-token-long-enough"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["user"]["email"] == "ayush@example.com"
+    assert data["user"]["provider"] == "google"
+    assert account_client.get("/api/auth/me").status_code == 200
