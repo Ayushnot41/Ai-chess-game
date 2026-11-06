@@ -1,0 +1,88 @@
+/* Refinements to the existing mahogany / midnight chess room. */
+:root { color-scheme: dark; --text-dim: #a0adc2; --text-secondary: #b4bfd0; }
+[hidden] { display: none !important; }
+body { min-height: 100dvh; height: 100dvh; }
+button, select, summary { -webkit-tap-highlight-color: transparent; }
+button, .select-input { min-height: 44px; }
+button:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+:focus-visible { outline: 3px solid #e4bb77; outline-offset: 3px; }
+::selection { background: #e4bb77; color: #131923; }
+input { caret-color: #e4bb77; }
+.app-header { height: auto; min-height: 84px; flex-shrink: 0; gap: 20px; padding: 16px 24px; flex-wrap: wrap; }
+.brand-title { background: none; -webkit-text-fill-color: #f0e9dc; font-size: 22px; letter-spacing: 1.4px; }
+.brand-subtitle { color: #b6b9c2; text-transform: none; letter-spacing: 0; font-size: 12px; margin-top: 4px; }
+.header-actions { gap: 8px; flex-wrap: wrap; }
+.header-actions .select-input { max-width: 190px; }
+.btn-primary { background: #d7ad6c; color: #1b1720; border-color: #d7ad6c; box-shadow: none; font-weight: 700; }
+.btn-primary:hover { background: #e7bf83; box-shadow: 0 5px 14px #0003; }
+.btn-secondary { background: #1b2534; }
+.main-viewport { min-height: 0; }
+.canvas-container { min-width: 0; height: 100%; display: flex; flex-direction: column; background: #0c0f17; }
+.viewport-top-hud { position: static; padding: 12px 20px 0; gap: 8px; flex-wrap: wrap; flex-shrink: 0; }
+.material-tray { padding: 8px 12px; background: transparent; border: 0; backdrop-filter: none; }
+.turn-banner-container { position: static; transform: none; width: auto; margin: 12px 24px 0; pointer-events: auto; }
+.turn-banner { display: block; background: transparent; border: 0; box-shadow: none; padding: 0; color: #f0e9dc; text-align: left; backdrop-filter: none; }
+.turn-banner.player-turn, .turn-banner.ai-turn { box-shadow: none; color: #f0e9dc; background: transparent; border: 0; }
+#fen-error { color: #ffd2a1; line-height: 1.6; margin-bottom: 12px; }
+.turn-copy { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+#turn-title { font: 600 28px var(--font-heading); letter-spacing: -.02em; }
+#player-side-label { font: 500 13px var(--font-body); color: #d5b783; }
+#play-instruction { font: 400 14px/1.6 var(--font-body); color: #b4bfd0; margin-top: 6px; }
+#board-canvas-container { flex: 1; min-height: 240px; height: auto; overflow: hidden; }
+#board-canvas-container canvas { display: block; touch-action: none; }
+.viewport-bottom-controls { position: static; transform: none; margin: 0 20px 20px; padding: 12px; justify-content: center; flex-wrap: wrap; flex-shrink: 0; box-shadow: none; background: #121a27; }
+.viewport-bottom-controls button { white-space: nowrap; }
+.camera-controls-group { flex-wrap: wrap; border: 0; padding: 0; margin: 0; }
+#btn-auto-move { background: #d7ad6c !important; color: #1b1720; }
+.analytics-sidebar { width: 330px; flex-shrink: 0; padding: 20px; gap: 20px; background: #111824; }
+.analytics-card { background: transparent; border: 0; border-radius: 0; padding: 0 0 20px; box-shadow: none; border-bottom: 1px solid #ffffff12; }
+.card-title { color: #b4bfd0; font-size: 11px; letter-spacing: .09em; }
+.move-entry h2 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+.move-entry p { color: #b4bfd0; font-size: 13px; line-height: 1.65; margin: 8px 0 12px; }
+.move-entry label { display: block; color: #b4bfd0; font-size: 12px; margin: 12px 0 8px; }
+.move-input-row { display: flex; gap: 8px; }
+.move-input-row input { min-width: 0; font-size: 16px; }
+summary { min-height: 44px; padding-top: 14px; cursor: pointer; font-size: 13px; color: #d5b783; }
+.promotion-options select { width: 100%; }
+.how-to-play { margin-top: 4px; }
+.hud-commentary-text { border: 0; padding: 12px; background: #1b2534; line-height: 1.7; color: #d1d9e5; }
+.best-move-badge { background: #d7ad6c; color: #171d26; box-shadow: none; }
+.history-container { min-height: 100px; line-height: 1.6; color: #aab7cb; font-size: 13px; }
+.save-controls { display: grid; gap: 12px; }
+#save-status { font-size: 12px; line-height: 1.5; color: #aab7cb; }
+#game-error { background: #402d21; color: #ffe0b9; padding: 14px; border-radius: 8px; font-size: 14px; line-height: 1.6; }
+.simple-play .eval-sidebar, .simple-play #btn-fen, .simple-play #btn-heatmap,
+.simple-play .analytics-card:has(#hud-candidates-list), .simple-play .viewport-top-hud,
+.simple-play .camera-controls-group [data-view="white"], .simple-play .camera-controls-group [data-view="black"] { display: none; }
+.simple-play .analytics-card:has(#ai-status-text) { display: none; }
+.simple-play .turn-banner-container { margin-top: 24px; }
+.simple-play #hud-motifs { display: none; }
+.modal-card { max-width: calc(100vw - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; }
+.modal-desc { line-height: 1.65; }
+@media (max-width: 1150px) {
+    .app-header { gap: 12px; padding: 12px 20px; }
+    .header-actions { width: 100%; }
+    .analytics-sidebar { width: 300px; }
+}
+@media (max-width: 760px) {
+    body { height: auto; overflow: auto; }
+    .app-header { padding: 16px; }
+    .brand-title { font-size: 20px; }
+    .header-actions { display: grid; grid-template-columns: 1fr 1fr; }
+    .header-actions .select-input { max-width: none; width: 100%; min-width: 0; }
+    .main-viewport { flex-direction: column; overflow: visible; }
+    .canvas-container { height: 610px; flex: none; width: 100%; }
+    .turn-banner-container, .simple-play .turn-banner-container { margin: 20px 16px 0; }
+    #turn-title { font-size: 24px; }
+    #play-instruction { min-height: 44px; font-size: 13px; }
+    .viewport-bottom-controls { margin: 0 12px 16px; padding: 10px; gap: 8px; }
+    .camera-controls-group { width: 100%; justify-content: center; }
+    .analytics-sidebar { width: 100%; overflow: visible; border-left: 0; border-top: 1px solid #ffffff12; padding: 24px 20px; }
+    .eval-sidebar { display: none; }
+    .viewport-top-hud { padding: 8px; }
+    .material-tray { padding: 4px; }
+    .history-container { max-height: 200px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

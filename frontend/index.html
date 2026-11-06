@@ -12,13 +12,14 @@
 
     <!-- CSS -->
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/play.css">
 
     <!-- Dependencies -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="vendor/three.min.js"></script>
+    <script src="vendor/OrbitControls.js"></script>
+    <script src="vendor/chess.min.js"></script>
 </head>
-<body>
+<body class="simple-play">
 
     <!-- Top Navigation Header -->
     <header class="app-header">
@@ -26,24 +27,24 @@
             <div class="brand-logo-icon">♔</div>
             <div>
                 <h1 class="brand-title">GRANDMASTER-AI</h1>
-                <div class="brand-subtitle">IIT-Engineered 3D Chess Platform & Minimax Predictor</div>
+                <div class="brand-subtitle">A little curiosity. A better next move.</div>
             </div>
         </div>
 
         <div class="header-actions">
             <!-- Child-Friendly Mode Toggle -->
-            <button id="btn-kid-mode" class="btn-secondary" style="border-color: #f59e0b; color: #fbbf24;" title="Toggle Child-Friendly Simple Play with Visual Coaching">⭐ Kid Friendly: ON</button>
+            <button id="btn-kid-mode" class="btn-secondary" style="border-color: #f59e0b; color: #fbbf24;" title="Toggle Child-Friendly Simple Play with Visual Coaching">Simple play</button>
 
             <!-- Difficulty Selector -->
-            <select id="select-difficulty" class="select-input" title="AI Search Depth">
-                <option value="1">🐣 Kid Friendly (Fun & Easy)</option>
-                <option value="2">🎓 Casual Player (Depth 2)</option>
-                <option value="4" selected>⚔️ Tournament Pro (Depth 4)</option>
-                <option value="5">👑 Grandmaster IIT (Depth 5)</option>
+            <select id="select-difficulty" class="select-input" title="AI Search Depth" aria-label="Difficulty">
+                <option value="1" selected>Beginner · depth 1</option>
+                <option value="2">Casual · depth 2</option>
+                <option value="4">Challenging · depth 4</option>
+                <option value="5">Expert · depth 5</option>
             </select>
 
             <!-- Board Theme Selector -->
-            <select id="select-theme" class="select-input" title="Board 3D Theme">
+            <select id="select-theme" class="select-input" title="Board 3D Theme" aria-label="Board theme">
                 <option value="wood" selected>Classic Mahogany</option>
                 <option value="marble">Carrara Marble</option>
                 <option value="cyberpunk">Obsidian Cyberpunk</option>
@@ -52,7 +53,7 @@
 
             <button id="btn-sound" class="btn-secondary">🔊 Sound: ON</button>
             <button id="btn-fen" class="btn-secondary">FEN</button>
-            <button id="btn-new-game" class="btn-primary">New Match</button>
+            <button id="btn-new-game" class="btn-primary">New game</button>
         </div>
     </header>
 
@@ -91,14 +92,14 @@
 
             <!-- Interactive Turn Banner -->
             <div class="turn-banner-container">
-                <div id="turn-banner" class="turn-banner player-turn">
-                    <span id="turn-banner-icon">🟢</span>
-                    <span id="turn-banner-text">YOUR TURN — Click a piece or tap '⚡ Play Best Move'</span>
+                <div id="turn-banner" class="turn-banner player-turn" role="status" aria-live="polite">
+                    <div class="turn-copy"><strong id="turn-title">Your turn</strong><span id="player-side-label">You play white</span></div>
+                    <p id="play-instruction">Choose one of your pieces, then a highlighted square.</p>
                 </div>
             </div>
 
             <!-- Three.js Canvas Container -->
-            <div id="board-canvas-container"></div>
+            <div id="board-canvas-container" role="img" aria-label="Interactive 3D chessboard. Select a piece then a highlighted square, or use the keyboard move field below."></div>
 
             <!-- Floating Bottom Controls: Camera Views & In-game Tools -->
             <div class="viewport-bottom-controls">
@@ -109,15 +110,27 @@
                     <button class="btn-secondary" data-view="black">Black POV</button>
                 </div>
 
-                <button id="btn-auto-move" class="btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);" title="Help me play the best move!">⚡ Play Best Move</button>
-                <button id="btn-hint" class="btn-secondary" title="Show AI Best Move 3D Arrow">💡 Hint</button>
-                <button id="btn-undo" class="btn-secondary" title="Oops! Take back move">↩ Undo</button>
-                <button id="btn-heatmap" class="btn-secondary" title="Toggle 3D Square Dominance Heatmap">🔥 Heatmap</button>
+                <button id="btn-retry-ai" class="btn-primary" hidden>Retry AI</button>
+                <button id="btn-auto-move" class="btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);" title="Help me play the best move!">Help me move</button>
+                <button id="btn-hint" class="btn-secondary" title="Show AI Best Move 3D Arrow">Hint</button>
+                <button id="btn-undo" class="btn-secondary" title="Oops! Take back move">Undo</button>
+                <button id="btn-heatmap" class="btn-secondary" title="Toggle 3D Square Dominance Heatmap">Heatmap</button>
             </div>
         </section>
 
         <!-- Right Column: AI Analysis & Grandmaster Coach HUD -->
-        <aside class="analytics-sidebar">
+        <aside class="analytics-sidebar" aria-label="Chess coach and move history">
+            <div id="game-error" role="alert" hidden></div>
+            <section class="move-entry">
+                <h2>Make your move</h2>
+                <p>Tap a piece on the board, or type a move.</p>
+                <form id="move-form">
+                    <label for="move-input">Keyboard move</label>
+                    <div class="move-input-row"><input id="move-input" class="input-text" placeholder="e4 or g1f3" autocomplete="off" maxlength="12" spellcheck="false"><button id="submit-move" class="btn-primary" type="submit">Play</button></div>
+                    <details class="promotion-options"><summary>Pawn promotion</summary><label for="promotion-piece">When a pawn reaches the last row</label><select id="promotion-piece" class="select-input"><option value="q">Queen (recommended)</option><option value="n">Knight</option><option value="r">Rook</option><option value="b">Bishop</option></select></details>
+                </form>
+                <details class="how-to-play"><summary>How to play</summary><p>You play the light pieces first. Select a piece, then a highlighted square. Keep your king safe. Win by trapping the other king: checkmate.</p><p>Stuck? Try Hint. Undo lets you try another idea. Drag the board to look around; choose 2D Tactical for a view from above.</p></details>
+            </section>
 
             <!-- Card 1: Engine Status -->
             <div class="analytics-card">
@@ -130,7 +143,7 @@
             <!-- Card 2: AI Move Predictor & Tactical Motifs -->
             <div class="analytics-card">
                 <div class="card-title-row">
-                    <div class="card-title">AI Move Predictor</div>
+                    <div class="card-title">Your chess coach</div>
                     <span style="font-size: 11px; color: var(--cyan); font-family: var(--font-mono);">α-β Heuristic</span>
                 </div>
 
@@ -170,16 +183,17 @@
                 </div>
             </div>
 
+            <div class="save-controls"><span id="save-status">Your game saves on this device</span><button id="btn-export" class="btn-secondary">Export PGN</button></div>
         </aside>
     </main>
 
     <!-- Modals -->
 
     <!-- New Game Modal -->
-    <div id="modal-new-game" class="modal-overlay hidden">
+    <div id="modal-new-game" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Start a new game">
         <div class="modal-card">
             <h2 class="modal-title">Start New Match</h2>
-            <p class="modal-desc">Configure your side and match parameters against the Minimax AI.</p>
+            <p class="modal-desc">Choose your pieces. Starting a new game replaces the saved game on this device.</p>
 
             <div class="form-group">
                 <label class="form-label">Play As</label>
@@ -197,19 +211,20 @@
 
             <div class="modal-actions">
                 <button class="btn-secondary" onclick="window.app.closeModals()">Cancel</button>
-                <button id="modal-start-game" class="btn-primary">Launch Match</button>
+                <button id="modal-start-game" class="btn-primary">Start playing</button>
             </div>
         </div>
     </div>
 
     <!-- FEN Position Loader Modal -->
-    <div id="modal-fen" class="modal-overlay hidden">
+    <div id="modal-fen" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Load chess position">
         <div class="modal-card">
             <h2 class="modal-title">FEN Position Editor</h2>
+            <p id="fen-error" role="alert"></p>
             <p class="modal-desc">Inspect or paste any Forsyth–Edwards Notation string to set up puzzles or test positions.</p>
 
             <div class="form-group">
-                <label class="form-label">Position FEN</label>
+                <label class="form-label" for="input-fen-string">Position FEN</label>
                 <input id="input-fen-string" type="text" class="input-text" placeholder="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1">
             </div>
 
@@ -221,14 +236,14 @@
     </div>
 
     <!-- Game Over Modal -->
-    <div id="modal-game-over" class="modal-overlay hidden">
+    <div id="modal-game-over" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="game-over-title">
         <div class="modal-card" style="text-align: center;">
             <div style="font-size: 48px; margin-bottom: 8px;">🏆</div>
             <h2 id="game-over-title" class="modal-title">Checkmate!</h2>
             <p id="game-over-desc" class="modal-desc" style="margin-bottom: 24px;">The game has concluded.</p>
 
             <div class="modal-actions" style="justify-content: center;">
-                <button class="btn-primary" onclick="window.app.startNewGame('white')">Play Again</button>
+                <button class="btn-secondary" onclick="window.app.closeModals()">Review game</button><button class="btn-primary" onclick="window.app.startNewGame('white')">Play again</button>
             </div>
         </div>
     </div>
@@ -238,6 +253,7 @@
 
     <!-- Application Scripts -->
     <script src="js/audio.js"></script>
+    <script src="js/materials.js"></script>
     <script src="js/models.js"></script>
     <script src="js/board3d.js"></script>
     <script src="js/api.js"></script>

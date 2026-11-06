@@ -1,0 +1,36 @@
+name: Bug Report
+description: Report an issue or unexpected engine/UI behavior.
+title: "[BUG]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report an issue with Grandmaster-AI!
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the bug encountered during gameplay or engine search.
+      placeholder: e.g. Clicking '⚡ Play Best Move' in endgame did not update...
+    validations:
+      required: true
+  - type: input
+    id: fen
+    attributes:
+      label: FEN String (if applicable)
+      placeholder: e.g. rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+    validations:
+      required: false
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform / Browser
+      options:
+        - Chrome / Chromium
+        - Firefox
+        - Safari
+        - Edge
+        - Terminal CLI (Windows PowerShell / Linux bash)
+    validations:
+      required: true

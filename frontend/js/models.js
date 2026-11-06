@@ -256,6 +256,7 @@ class PieceModelFactory {
         const mat = this.getMaterial(isWhite, theme);
         pieceObj.traverse((child) => {
             if (child.isMesh) {
+                child.material.dispose();
                 child.material = mat;
                 child.castShadow = true;
                 child.receiveShadow = true;

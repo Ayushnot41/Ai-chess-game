@@ -269,6 +269,11 @@ s = s.replace('        listContainer.innerHTML = \'\';\n\n        for (let i', '
 method('showNewGameModal', '''    showNewGameModal() {
         this.openModal('modal-new-game');
     }''')
+method('setAiStatus', '''    setAiStatus(thinking, message) {
+        document.getElementById('ai-status-dot').className = thinking ? 'status-dot pulse-amber' : 'status-dot emerald';
+        document.getElementById('ai-status-text').textContent = message;
+        document.getElementById('turn-banner')?.classList.toggle('ai-turn', thinking);
+    }''')
 method('showFenModal', '''    showFenModal() {
         document.getElementById('input-fen-string').value = this.chess.fen();
         this.openModal('modal-fen');

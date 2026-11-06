@@ -1,0 +1,24 @@
+name: Feature Proposal
+description: Suggest an enhancement, new heuristic, or 3D visual feature.
+title: "[FEATURE]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Suggesting an enhancement for Grandmaster-AI.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Is your feature related to a problem?
+      description: A clear and concise description of the limitation or need.
+      placeholder: e.g. I would love to see an opening book / polyglot .bin loader...
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution / Visual Design
+      description: Describe your proposed architectural or UI approach.
+    validations:
+      required: true

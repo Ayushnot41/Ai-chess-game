@@ -1,87 +1,46 @@
-/**
- * Grandmaster-AI API Client
- * Interfaces with the FastAPI backend engine services.
- */
-
+/** Same-origin requests with cancellation, deadlines and replayable history. */
 class ChessAPI {
     constructor(baseUrl = '') {
         this.baseUrl = baseUrl;
+        this.pending = new Map();
+        this.historyProvider = null;
+        this.onError = null;
     }
-
-    async evaluate(fen) {
+    cancelAll() {
+        this.pending.forEach(controller => controller.abort());
+        this.pending.clear();
+    }
+    async request(endpoint, payload, channel = endpoint) {
+        this.pending.get(channel)?.abort();
+        const controller = new AbortController();
+        this.pending.set(channel, controller);
+        let timedOut = false;
+        const timer = setTimeout(() => { timedOut = true; controller.abort(); }, 15000);
         try {
-            const res = await fetch(`${this.baseUrl}/api/evaluate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fen })
+            const response = await fetch(`${this.baseUrl}/api/${endpoint}`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...(this.historyProvider?.(payload.fen) || {}), ...payload }),
+                signal: controller.signal
             });
-            if (!res.ok) throw new Error(await res.text());
-            return await res.json();
-        } catch (err) {
-            console.error('API evaluate error:', err);
+            if (!response.ok) {
+                const body = await response.json().catch(() => ({}));
+                throw new Error(typeof body.detail === 'string' ? body.detail : `Request failed (${response.status}). Please retry.`);
+            }
+            return await response.json();
+        } catch (error) {
+            if (error.name !== 'AbortError' || timedOut) this.onError?.(timedOut
+                ? 'The engine took too long. Try again or choose an easier level.'
+                : error.message === 'Failed to fetch' ? 'Cannot reach the engine. Check the server, then retry.' : error.message);
             return null;
+        } finally {
+            clearTimeout(timer);
+            if (this.pending.get(channel) === controller) this.pending.delete(channel);
         }
     }
-
-    async getAIMove(fen, depth = 4, timeLimit = 3.0) {
-        try {
-            const res = await fetch(`${this.baseUrl}/api/move`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fen, depth, time_limit: timeLimit })
-            });
-            if (!res.ok) throw new Error(await res.text());
-            return await res.json();
-        } catch (err) {
-            console.error('API getAIMove error:', err);
-            return null;
-        }
-    }
-
-    async predict(fen, topK = 3, depth = 3) {
-        try {
-            const res = await fetch(`${this.baseUrl}/api/predict`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fen, top_k: topK, depth })
-            });
-            if (!res.ok) throw new Error(await res.text());
-            return await res.json();
-        } catch (err) {
-            console.error('API predict error:', err);
-            return null;
-        }
-    }
-
-    async getHeatmap(fen) {
-        try {
-            const res = await fetch(`${this.baseUrl}/api/heatmap`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fen })
-            });
-            if (!res.ok) throw new Error(await res.text());
-            return await res.json();
-        } catch (err) {
-            console.error('API heatmap error:', err);
-            return null;
-        }
-    }
-
-    async validateMove(fen, moveUci) {
-        try {
-            const res = await fetch(`${this.baseUrl}/api/validate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fen, move_uci: moveUci })
-            });
-            if (!res.ok) throw new Error(await res.text());
-            return await res.json();
-        } catch (err) {
-            console.error('API validate error:', err);
-            return { valid: false, error: err.message };
-        }
-    }
+    evaluate(fen) { return this.request('evaluate', { fen }); }
+    getAIMove(fen, depth = 2, timeLimit = 3) { return this.request('move', { fen, depth, time_limit: timeLimit }); }
+    predict(fen, topK = 3, depth = 3, channel = 'predict') { return this.request('predict', { fen, top_k: topK, depth }, channel); }
+    getHeatmap(fen) { return this.request('heatmap', { fen }); }
+    validateMove(fen, moveUci) { return this.request('validate', { fen, move_uci: moveUci }); }
 }
-
 window.chessAPI = new ChessAPI();

@@ -23,6 +23,8 @@ class Board3D {
         this.kingCheckMesh = null;
 
         this.selectedSquare = null;
+        this.positionVersion = 0;
+        this.reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
         this.onSquareClick = options.onSquareClick || null;
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
@@ -50,6 +52,9 @@ class Board3D {
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.1;
+        this.renderer.outputEncoding = THREE.sRGBEncoding;
+        this.studioTarget = window.chessMaterials.studio(this.renderer);
+        this.scene.environment = this.studioTarget.texture;
         this.container.appendChild(this.renderer.domElement);
 
         // 4. Orbit Controls
@@ -68,7 +73,17 @@ class Board3D {
 
         // 7. Event Listeners
         window.addEventListener('resize', () => this.onWindowResize());
-        this.renderer.domElement.addEventListener('pointerdown', (e) => this.onPointerDown(e));
+        this.resizeObserver = new ResizeObserver(() => this.onWindowResize());
+        this.resizeObserver.observe(this.container);
+        this.renderer.domElement.addEventListener('pointerdown', event => {
+            this.pointerStart = {x:event.clientX, y:event.clientY, id:event.pointerId};
+        });
+        this.renderer.domElement.addEventListener('pointerup', event => {
+            if (this.pointerStart?.id === event.pointerId &&
+                Math.hypot(event.clientX-this.pointerStart.x, event.clientY-this.pointerStart.y) < 6) this.onPointerDown(event);
+            this.pointerStart = null;
+        });
+        this.renderer.domElement.addEventListener('pointercancel', () => { this.pointerStart = null; });
 
         // 8. Render Loop
         this.animate = this.animate.bind(this);
@@ -77,12 +92,12 @@ class Board3D {
 
     setupLights() {
         // Soft Ambient Light
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+        const ambientLight = new THREE.HemisphereLight(0xe8efff, 0x36231a, 0.3);
         this.scene.add(ambientLight);
 
         // Key Directional Light with soft shadows
-        const dirLight = new THREE.DirectionalLight(0xfff3e0, 1.2);
-        dirLight.position.set(8, 16, 10);
+        const dirLight = new THREE.DirectionalLight(0xffefd7, 1.05);
+        dirLight.position.set(-5, 12, 7);
         dirLight.castShadow = true;
         dirLight.shadow.mapSize.width = 2048;
         dirLight.shadow.mapSize.height = 2048;
@@ -94,15 +109,17 @@ class Board3D {
         dirLight.shadow.camera.top = d;
         dirLight.shadow.camera.bottom = -d;
         dirLight.shadow.bias = -0.0005;
+        dirLight.shadow.normalBias = 0.025;
+        dirLight.shadow.radius = 3;
         this.scene.add(dirLight);
 
         // Cool Rim / Fill Light
-        const fillLight = new THREE.DirectionalLight(0x60a5fa, 0.45);
-        fillLight.position.set(-8, 10, -10);
+        const fillLight = new THREE.DirectionalLight(0xc8daff, 0.6);
+        fillLight.position.set(5, 8, -7);
         this.scene.add(fillLight);
 
         // Center Board Spotlight for focus
-        const spotLight = new THREE.SpotLight(0xffffff, 0.5, 20, Math.PI / 4, 0.4, 1);
+        const spotLight = new THREE.SpotLight(0xffffff, 0.18, 20, Math.PI / 4, 0.4, 1);
         spotLight.position.set(0, 12, 0);
         spotLight.target.position.set(0, 0, 0);
         this.scene.add(spotLight);
@@ -116,27 +133,31 @@ class Board3D {
         const tileMaterials = this.getTileMaterials();
 
         // Board Base Pedestal Frame
-        const frameGeom = new THREE.BoxGeometry(9.4, 0.6, 9.4);
+        const frameGeom = this.beveledBoard(9.1, 0.38, 0.09);
         const frameMat = new THREE.MeshStandardMaterial({
-            color: this.theme === 'cyberpunk' ? 0x0f172a : 0x241812,
-            roughness: 0.4,
-            metalness: 0.2
+            color: 0xa88b78,
+            map: window.chessMaterials.wood(false),
+            roughness: 0.36,
+            metalness: 0,
+            envMapIntensity: 0.45
         });
         const frame = new THREE.Mesh(frameGeom, frameMat);
-        frame.position.y = -0.32;
+        frame.position.y = -0.42;
         frame.receiveShadow = true;
         boardGroup.add(frame);
 
         // Gold / Metallic Edge Inlay
-        const inlayGeom = new THREE.BoxGeometry(8.9, 0.05, 8.9);
+        const inlayGeom = this.beveledBoard(8.85, 0.09, 0.025);
         const inlayMat = new THREE.MeshStandardMaterial({
-            color: this.theme === 'cyberpunk' ? 0x06b6d4 : 0xd4af37,
+            color: this.theme === 'cyberpunk' ? 0x06b6d4 : 0xb3975d,
             metalness: 0.8,
             roughness: 0.2
         });
         const inlay = new THREE.Mesh(inlayGeom, inlayMat);
         inlay.position.y = 0.01;
         boardGroup.add(inlay);
+        const rim = new THREE.Mesh(this.beveledBoard(8.78, .075, .025), new THREE.MeshStandardMaterial({color:0xdbc1a7, map:window.chessMaterials.wood(false), roughness:.33, envMapIntensity:.45}));
+        rim.position.y = .03; rim.receiveShadow = true; boardGroup.add(rim);
 
         // 64 Tiles
         const tileGeom = new THREE.BoxGeometry(1.0, 0.12, 1.0);
@@ -166,6 +187,8 @@ class Board3D {
         }
 
         this.scene.add(boardGroup);
+        tileMaterials.light.dispose(); tileMaterials.dark.dispose();
+        this.addCoordinates(boardGroup);
     }
 
     getTileMaterials() {
@@ -226,8 +249,11 @@ class Board3D {
 
     setTheme(newTheme) {
         this.theme = newTheme;
+        this.highlightMaterial?.dispose();
+        this.highlightMaterial = null;
         const tileMats = this.getTileMaterials();
         this.tiles.forEach(tile => {
+            tile.userData.defaultMaterial.dispose();
             const mat = tile.userData.isLight ? tileMats.light.clone() : tileMats.dark.clone();
             tile.material = mat;
             tile.userData.defaultMaterial = mat;
@@ -236,18 +262,25 @@ class Board3D {
         Object.keys(this.pieceMeshes).forEach(sq => {
             const p = this.pieceMeshes[sq];
             const newMat = window.pieceModelFactory.getMaterial(p.color === 'white', newTheme);
+            const oldMaterials = new Set();
             p.mesh.traverse(child => {
-                if (child.isMesh) child.material = newMat;
+                if (child.isMesh) { oldMaterials.add(child.material); child.material = newMat; }
             });
+            oldMaterials.forEach(material => material.dispose());
         });
+        tileMats.light.dispose(); tileMats.dark.dispose();
     }
 
     loadFEN(fen) {
+        this.positionVersion++;
         // Clear all current piece meshes
-        Object.keys(this.pieceMeshes).forEach(sq => {
-            this.scene.remove(this.pieceMeshes[sq].mesh);
-        });
+        this.removeObjects(Object.values(this.pieceMeshes).map(piece => piece.mesh));
         this.pieceMeshes = {};
+        this.removeObjects(this.particles.map(particle => particle.mesh));
+        this.particles = [];
+        this.tiles.forEach(tile => { tile.material = tile.userData.defaultMaterial; });
+        this.highlightMaterial?.dispose(); this.highlightMaterial = null;
+        this.clearHeatmap();
         this.clearIndicators();
         this.clearPredictedArrow();
         this.clearKingCheck();
@@ -278,6 +311,7 @@ class Board3D {
         const mesh = window.pieceModelFactory.createPieceMesh(pieceType, isWhite, this.theme);
         const coords = this.squareToCoords(square);
         mesh.position.set(coords.x, 0.12, coords.z);
+        mesh.userData.square = square;
         this.scene.add(mesh);
 
         this.pieceMeshes[square] = {
@@ -290,6 +324,7 @@ class Board3D {
     }
 
     animateMove(fromSq, toSq, promotion = null, onComplete = null) {
+        const version = this.positionVersion;
         const pieceData = this.pieceMeshes[fromSq];
         if (!pieceData) {
             if (onComplete) onComplete();
@@ -303,7 +338,7 @@ class Board3D {
         // Handle Capture Effect
         if (targetPieceData) {
             this.spawnCaptureParticles(toCoords.x, 0.6, toCoords.z, targetPieceData.color === 'white' ? 0xffffff : 0x333333);
-            this.scene.remove(targetPieceData.mesh);
+            this.removeObjects([targetPieceData.mesh]);
             delete this.pieceMeshes[toSq];
             window.soundEngine.playCapture();
         } else {
@@ -315,10 +350,11 @@ class Board3D {
         const endPos = new THREE.Vector3(toCoords.x, 0.12, toCoords.z);
         const peakHeight = pieceData.type === 'n' ? 1.4 : 0.8; // Knights jump higher!
 
-        const duration = 280; // milliseconds
+        const duration = this.reducedMotion ? 1 : 280;
         const startTime = performance.now();
 
         const moveLoop = (now) => {
+            if (version !== this.positionVersion) return;
             const elapsed = now - startTime;
             const t = Math.min(1.0, elapsed / duration);
 
@@ -340,10 +376,11 @@ class Board3D {
 
                 // Handle Pawn Promotion mesh replacement
                 if (promotion) {
-                    this.scene.remove(pieceData.mesh);
+                    this.removeObjects([pieceData.mesh]);
                     this.spawnPiece(toSq, promotion.toLowerCase(), pieceData.color === 'white');
                 } else {
                     pieceData.square = toSq;
+                    pieceData.mesh.userData.square = toSq;
                     this.pieceMeshes[toSq] = pieceData;
                 }
 
@@ -356,6 +393,7 @@ class Board3D {
     }
 
     spawnCaptureParticles(x, y, z, colorHex) {
+        if (this.reducedMotion) return;
         const count = 28;
         const particleGeom = new THREE.DodecahedronGeometry(0.06);
 
@@ -407,7 +445,7 @@ class Board3D {
     }
 
     clearIndicators() {
-        this.indicators.forEach(ind => this.scene.remove(ind));
+        this.removeObjects(this.indicators);
         this.indicators = [];
     }
 
@@ -416,6 +454,7 @@ class Board3D {
         this.tiles.forEach(t => {
             t.material = t.userData.defaultMaterial;
         });
+        this.highlightMaterial?.dispose();
 
         const highlightMat = new THREE.MeshStandardMaterial({
             color: 0xf59e0b,
@@ -423,6 +462,7 @@ class Board3D {
             emissiveIntensity: 0.5,
             roughness: 0.3
         });
+        this.highlightMaterial = highlightMat;
 
         [fromSq, toSq].forEach(sq => {
             const coords = this.squareToCoords(sq);
@@ -455,7 +495,7 @@ class Board3D {
 
     clearKingCheck() {
         if (this.kingCheckMesh) {
-            this.scene.remove(this.kingCheckMesh);
+            this.removeObjects([this.kingCheckMesh]);
             this.kingCheckMesh = null;
         }
     }
@@ -510,7 +550,7 @@ class Board3D {
 
     clearPredictedArrow() {
         if (this.arrowMesh) {
-            this.scene.remove(this.arrowMesh);
+            this.removeObjects([this.arrowMesh]);
             this.arrowMesh = null;
         }
     }
@@ -550,7 +590,7 @@ class Board3D {
     }
 
     clearHeatmap() {
-        this.heatmapMeshes.forEach(m => this.scene.remove(m));
+        this.removeObjects(this.heatmapMeshes);
         this.heatmapMeshes = [];
     }
 
@@ -560,12 +600,13 @@ class Board3D {
         this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
         this.raycaster.setFromCamera(this.mouse, this.camera);
-        const intersects = this.raycaster.intersectObjects(this.tiles);
+        const intersects = this.raycaster.intersectObjects([...this.tiles, ...Object.values(this.pieceMeshes).map(piece => piece.mesh)], true);
 
         if (intersects.length > 0) {
-            const clickedTile = intersects[0].object;
-            const sq = clickedTile.userData.square;
-            if (this.onSquareClick) {
+            let clickedTile = intersects[0].object;
+            while (clickedTile && !clickedTile.userData.square) clickedTile = clickedTile.parent;
+            const sq = clickedTile?.userData.square;
+            if (sq && this.onSquareClick) {
                 this.onSquareClick(sq);
             }
         }
@@ -574,13 +615,16 @@ class Board3D {
     onWindowResize() {
         const width = this.container.clientWidth;
         const height = this.container.clientHeight;
+        if (!width || !height) return;
         this.camera.aspect = width / height;
+        this.camera.zoom = Math.min(1, this.camera.aspect / 1.1) * (this.camera.aspect < 1.1 ? 0.78 : 0.88);
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
     }
 
     animate(now) {
         requestAnimationFrame(this.animate);
+        if (document.hidden) return;
 
         // Update OrbitControls
         if (this.controls) this.controls.update();
@@ -595,23 +639,36 @@ class Board3D {
             p.mesh.material.opacity = Math.max(0, p.life);
 
             if (p.life <= 0) {
-                this.scene.remove(p.mesh);
+                this.removeObjects([p.mesh]);
                 this.particles.splice(i, 1);
             }
         }
 
         // Pulse king check aura
-        if (this.kingCheckMesh) {
+        if (this.kingCheckMesh && !this.reducedMotion) {
             const scale = 1.0 + Math.sin(now * 0.008) * 0.12;
             this.kingCheckMesh.scale.set(scale, 1, scale);
         }
 
         // Gentle float for predicted arrow
-        if (this.arrowMesh) {
+        if (this.arrowMesh && !this.reducedMotion) {
             this.arrowMesh.position.y = Math.sin(now * 0.005) * 0.06;
         }
 
         this.renderer.render(this.scene, this.camera);
+    }
+
+    removeObjects(objects) {
+        const geometries = new Set(), materials = new Set();
+        objects.forEach(object => {
+            this.scene.remove(object);
+            object.traverse(child => {
+                if (child.geometry) geometries.add(child.geometry);
+                if (child.material) (Array.isArray(child.material) ? child.material : [child.material]).forEach(material => materials.add(material));
+            });
+        });
+        geometries.forEach(geometry => geometry.dispose());
+        materials.forEach(material => material.dispose());
     }
 }
 

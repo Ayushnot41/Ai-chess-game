@@ -221,7 +221,7 @@ def predict_moves(req: PredictRequest):
     predictor = MovePredictor()
 
     candidates = predictor.predict_candidates(board, top_k=req.top_k, depth=req.depth, time_limit=req.time_limit)
-    current_eval = evaluate_board(board)
+    current_eval = 0 if game_finished(board) and not board.is_checkmate() else evaluate_board(board)
 
     return {
         "fen": board.fen(),
