@@ -8,10 +8,15 @@ import os
 import sys
 from pathlib import Path
 
-# Add project root directory to Python path
+# Add project root and local directories to Python path
 ROOT_DIR = Path(__file__).resolve().parent.parent
-if str(ROOT_DIR) not in sys.path:
-    sys.path.insert(0, str(ROOT_DIR))
+API_DIR = Path(__file__).resolve().parent
+CWD = Path.cwd()
+
+for p in [ROOT_DIR, API_DIR, CWD, CWD / "api"]:
+    s = str(p)
+    if s not in sys.path:
+        sys.path.insert(0, s)
 
 from backend.server import app as fastapi_app
 

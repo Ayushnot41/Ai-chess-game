@@ -43,7 +43,50 @@ from backend.database import get_engine
 @asynccontextmanager
 async def lifespan(_app):
     get_engine()
+    # Ensure Windows dual-stack IPv6 loopback (::1) proxies to 127.0.0.1:8000
+    # so that http://localhost:8000 works in all browsers and OS resolvers without latency
+    ipv6_forwarder = None
+    if not os.getenv("VERCEL") and not os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+        try:
+            import asyncio
+            async def forward_ipv6(reader, writer):
+                try:
+                    remote_reader, remote_writer = await asyncio.open_connection("127.0.0.1", 8000)
+                    async def pipe(r, w):
+                        try:
+                            while True:
+                                data = await r.read(65536)
+                                if not data:
+                                    break
+                                w.write(data)
+                                await w.drain()
+                        except Exception:
+                            pass
+                        finally:
+                            try:
+                                w.close()
+                                await w.wait_closed()
+                            except Exception:
+                                pass
+                    await asyncio.gather(pipe(reader, remote_writer), pipe(remote_reader, writer))
+                except Exception:
+                    try:
+                        writer.close()
+                    except Exception:
+                        pass
+
+            ipv6_forwarder = await asyncio.start_server(forward_ipv6, "::1", 8000)
+        except Exception:
+            pass
+
     yield
+
+    if ipv6_forwarder:
+        ipv6_forwarder.close()
+        try:
+            await ipv6_forwarder.wait_closed()
+        except Exception:
+            pass
     get_engine().dispose()
 
 app = FastAPI(

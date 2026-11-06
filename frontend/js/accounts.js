@@ -62,13 +62,17 @@ class ChessAccount {
         document.getElementById('account-confirm').required = mode === 'register';
     }
     render() {
-        document.getElementById('btn-account').textContent = this.user ? this.user.username : 'Sign in';
+        document.getElementById('btn-account').textContent = this.user ? (this.user.name || this.user.username) : 'Sign in';
         document.getElementById('account-form').hidden = !!this.user;
         document.getElementById('account-profile').hidden = !this.user;
         document.getElementById('account-switch').hidden = !!this.user;
+        const googleContainer = document.getElementById('google-auth-container');
+        if (googleContainer) {
+            googleContainer.style.display = this.user || !this.googleConfig?.google_enabled ? 'none' : 'block';
+        }
         if (this.user) {
             document.getElementById('account-title').textContent = 'Your account';
-            document.getElementById('account-username-display').textContent = this.user.username;
+            document.getElementById('account-username-display').textContent = this.user.name || this.user.username;
         } else this.setMode(this.mode);
     }
     setBusy(busy) {
@@ -152,7 +156,8 @@ class ChessAccount {
         window.google.accounts.id.initialize({
             client_id: this.googleConfig.google_client_id,
             callback: response => this.handleGoogleCredential(response),
-            auto_select: false
+            auto_select: false,
+            cancel_on_tap_outside: true
         });
         target.replaceChildren();
         window.google.accounts.id.renderButton(target, {
@@ -162,6 +167,13 @@ class ChessAccount {
             shape: 'pill',
             width: 280
         });
+        if (!this.user) {
+            try {
+                window.google.accounts.id.prompt();
+            } catch {
+                // One Tap may be suppressed if third-party cookies are blocked or origin not allowed
+            }
+        }
     }
     async handleGoogleCredential(response) {
         if (!response?.credential) return;
