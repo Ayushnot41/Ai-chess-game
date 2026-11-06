@@ -148,6 +148,7 @@ class ChessApp {
     async onMoveExecuted(move) {
         this.refreshPosition();
         this.saveGame();
+        if (this.chess.in_check()) window.soundEngine?.playCheck();
         if (this.checkGameOver()) return;
         if (!this.isPlayerTurn()) await this.triggerAIMove();
         else this.requestPredictions();

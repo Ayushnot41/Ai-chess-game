@@ -82,6 +82,7 @@ class Board3D {
         this.resizeObserver = new ResizeObserver(() => this.onWindowResize());
         this.resizeObserver.observe(this.container);
         this.renderer.domElement.addEventListener('pointerdown', event => {
+            window.soundEngine?.initContext();
             this.pointerStart = {x:event.clientX, y:event.clientY, id:event.pointerId};
         });
         this.renderer.domElement.addEventListener('pointerup', event => {
@@ -341,14 +342,15 @@ class Board3D {
         const toCoords = this.squareToCoords(toSq);
         const targetPieceData = this.pieceMeshes[toSq];
 
-        // Handle Capture Effect
+        // Handle Capture & Move Classification
+        const isEnPassant = pieceData.type === 'p' && fromSq[0] !== toSq[0] && !targetPieceData;
+        const isCapture = !!targetPieceData || isEnPassant;
+        const isCastle = pieceData.type === 'k' && Math.abs(fromCoords.x - toCoords.x) > 1.5;
+
         if (targetPieceData) {
             this.spawnCaptureParticles(toCoords.x, 0.6, toCoords.z, targetPieceData.color === 'white' ? 0xffffff : 0x333333);
             this.removeObjects([targetPieceData.mesh]);
             delete this.pieceMeshes[toSq];
-            window.soundEngine.playCapture();
-        } else {
-            window.soundEngine.playMove();
         }
 
         // Parabolic Move Animation
@@ -379,6 +381,15 @@ class Board3D {
             } else {
                 pieceData.mesh.position.copy(endPos);
                 delete this.pieceMeshes[fromSq];
+
+                // Play authentic tactile sound on touchdown
+                if (isCapture) {
+                    window.soundEngine?.playCapture();
+                } else if (isCastle) {
+                    window.soundEngine?.playCastle();
+                } else {
+                    window.soundEngine?.playMove();
+                }
 
                 // Handle Pawn Promotion mesh replacement
                 if (promotion) {

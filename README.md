@@ -5,7 +5,7 @@ Current setup and verified behavior: [Engineering handoff](docs/HANDOFF.md). Sou
 <div align="center">
 
 <!-- LIVE 3D MOTION GRAPHICS BANNER (AUTOPLAYING CSS KEYFRAMES VIA STANDALONE SVG) -->
-<a href="https://translated-goto-cost-verification.trycloudflare.com">
+<a href="https://payment-clearly-nov-puts.trycloudflare.com">
   <img src="assets/hero-3d-motion.svg" width="100%" alt="Grandmaster-AI 3D Live Motion Graphic Banner" />
 </a>
 
@@ -19,7 +19,7 @@ Current setup and verified behavior: [Engineering handoff](docs/HANDOFF.md). Sou
 [![Tests](https://img.shields.io/badge/Tests-47%20Passed-10b981.svg)](https://pytest.org)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FAyushnot41%2FAi-chess-game)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-trycloudflare.com-success.svg)](https://translated-goto-cost-verification.trycloudflare.com)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-trycloudflare.com-success.svg)](https://payment-clearly-nov-puts.trycloudflare.com)
 
 </div>
 
