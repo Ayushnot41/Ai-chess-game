@@ -46,7 +46,7 @@
 
             <!-- Board Theme Selector -->
             <select id="select-theme" class="select-input" title="Board 3D Theme" aria-label="Board theme">
-                <option value="wood" selected>Classic Mahogany</option>
+                <option value="wood" selected>Walnut &amp; maple</option>
                 <option value="marble">Carrara Marble</option>
                 <option value="cyberpunk">Obsidian Cyberpunk</option>
                 <option value="gold">Royal Gold</option>
@@ -55,6 +55,7 @@
             <button id="btn-sound" class="btn-secondary">🔊 Sound: ON</button>
             <button id="btn-fen" class="btn-secondary">FEN</button>
             <button id="btn-new-game" class="btn-primary">New game</button>
+            <button id="btn-account" class="btn-secondary">Sign in</button>
         </div>
     </header>
 
@@ -70,7 +71,17 @@
         </aside>
 
         <!-- Center Column: Three.js 3D Viewport -->
-        <section class="canvas-container">
+        <section id="play-arena" class="canvas-container" aria-label="Chess playing area">
+            <div class="board-toolbar">
+                <span class="board-room-label">The chess room</span>
+                <div class="fullscreen-settings">
+                    <label>Level <select id="board-difficulty" class="select-input"><option value="1">Beginner</option><option value="2">Casual</option><option value="4">Challenging</option><option value="5">Expert</option></select></label>
+                    <label>Board <select id="board-theme" class="select-input"><option value="wood">Walnut &amp; maple</option><option value="marble">Marble</option><option value="cyberpunk">Cyberpunk</option><option value="gold">Gold</option></select></label>
+                    <button id="btn-board-new" class="btn-secondary">New game</button>
+                </div>
+                <button id="btn-fullscreen" class="btn-secondary" aria-pressed="false" aria-controls="play-arena">Fullscreen</button>
+            </div>
+            <div id="arena-error" role="alert" hidden></div>
 
             <!-- Floating Top HUD: Captured Pieces & Advantage -->
             <div class="viewport-top-hud">
@@ -101,6 +112,7 @@
 
             <!-- Three.js Canvas Container -->
             <div id="board-canvas-container" role="img" aria-label="Interactive 3D chessboard. Select a piece then a highlighted square, or use the keyboard move field below."></div>
+            <div id="fullscreen-move-controls"></div>
 
             <!-- Floating Bottom Controls: Camera Views & In-game Tools -->
             <div class="viewport-bottom-controls">
@@ -189,6 +201,31 @@
     </main>
 
     <!-- Modals -->
+    <div id="modal-account" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="account-title">
+        <div class="modal-card account-card">
+            <h2 id="account-title" class="modal-title">Welcome back</h2>
+            <p class="modal-desc">Play as a guest anytime. An account lets you keep a private game and continue on another device.</p>
+            <p id="account-message" role="status" aria-live="polite"></p>
+            <form id="account-form">
+                <label class="form-label" for="account-username">Username</label>
+                <input id="account-username" class="input-text" autocomplete="username" required minlength="3" maxlength="24" pattern="[a-zA-Z0-9_]+" aria-describedby="username-help">
+                <p id="username-help" class="field-help">3–24 letters, numbers or underscores. You can use a nickname.</p>
+                <label class="form-label" for="account-password">Password</label>
+                <input id="account-password" class="input-text" type="password" autocomplete="current-password" required minlength="12" maxlength="128" aria-describedby="password-help">
+                <p id="password-help" class="field-help">Use at least 12 characters. Save it in your password manager; email recovery is not available yet.</p>
+                <label id="confirm-password-label" class="form-label" hidden>Confirm password<input id="account-confirm" class="input-text" type="password" autocomplete="new-password" minlength="12" maxlength="128"></label>
+                <button id="account-submit" class="btn-primary" type="submit">Sign in</button>
+            </form>
+            <button id="account-switch" class="text-button" type="button">New here? Create an account</button>
+            <section id="account-profile" hidden>
+                <p>Signed in as <strong id="account-username-display"></strong></p>
+                <p id="account-cloud-state" class="field-help">Checking your saved game…</p>
+                <p class="field-help">Cloud saves are manual. Save replaces the account copy; Load replaces this board. Local saves continue automatically.</p>
+                <div class="account-actions"><button id="account-save" class="btn-primary">Save current game</button><button id="account-load" class="btn-secondary">Load account game</button><button id="account-logout" class="btn-secondary">Sign out</button></div>
+            </section>
+            <div class="modal-actions"><button class="btn-secondary" onclick="window.app.closeModals()">Back to board</button></div>
+        </div>
+    </div>
 
     <!-- New Game Modal -->
     <div id="modal-new-game" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Start a new game">
@@ -258,6 +295,8 @@
     <script src="js/models.js"></script>
     <script src="js/board3d.js"></script>
     <script src="js/api.js"></script>
+    <script src="js/fullscreen.js"></script>
+    <script src="js/accounts.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

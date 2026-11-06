@@ -308,12 +308,12 @@ class PieceModelFactory {
         } else {
             // Classic Wood theme
             return new THREE.MeshPhysicalMaterial({
-                color: isWhite ? 0xe2cda7 : 0x241a15,
-                roughness: 0.3,
+                color: new THREE.Color(isWhite ? 0xe2d4b7 : 0x251d17).convertSRGBToLinear(),
+                roughness: 0.34,
                 metalness: 0,
-                clearcoat: 0.26,
+                clearcoat: 0.18,
                 clearcoatRoughness: 0.25,
-                envMapIntensity: 0.65,
+                envMapIntensity: 0.35,
             });
         }
     }

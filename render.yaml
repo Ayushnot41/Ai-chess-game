@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: grandmaster-ai
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn backend.server:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /api/status
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.9
+      - key: APP_ENV
+        value: production
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
+      - key: PUBLIC_ORIGIN
+        sync: false

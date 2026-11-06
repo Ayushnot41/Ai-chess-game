@@ -86,3 +86,47 @@ summary { min-height: 44px; padding-top: 14px; cursor: pointer; font-size: 13px;
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* The entire playable region enters fullscreen, including recovery controls. */
+.board-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 24px 0; flex-shrink:0; }
+.board-room-label { color:#c7bda9; font-size:13px; }
+.fullscreen-settings, #fullscreen-move-controls, #arena-error { display:none; }
+.board-is-expanded { overflow:hidden; }
+#play-arena:fullscreen, #play-arena.board-expanded {
+    position:fixed; inset:0; z-index:1000; width:100%; height:100dvh; min-height:0;
+    display:flex; flex-direction:column; background:#121713; overflow:auto;
+}
+#play-arena.board-expanded .fullscreen-settings { display:flex; gap:12px; align-items:center; margin-left:auto; }
+.fullscreen-settings label { font-size:12px; color:#c9ccbf; display:flex; gap:8px; align-items:center; }
+#play-arena.board-expanded .turn-banner-container { margin-top:8px; }
+#play-arena.board-expanded #board-canvas-container { min-height:180px; }
+#play-arena.board-expanded #fullscreen-move-controls { display:block; align-self:center; width:min(640px,100%); padding:0 24px 10px; }
+#fullscreen-move-controls .move-entry { display:flex; gap:16px; align-items:center; }
+#fullscreen-move-controls .move-entry h2, #fullscreen-move-controls .move-entry > p,
+#fullscreen-move-controls .how-to-play, #fullscreen-move-controls .move-entry form > label { display:none; }
+#fullscreen-move-controls form { display:flex; align-items:center; gap:12px; flex:1; }
+#fullscreen-move-controls .promotion-options { position:relative; }
+#fullscreen-move-controls .promotion-options[open] { position:absolute; right:24px; bottom:96px; padding:16px; background:#182219; border:1px solid #777e60; border-radius:10px; z-index:20; }
+#play-arena.board-expanded #arena-error:not([hidden]) { display:block; margin:8px 24px 0; padding:10px 16px; color:#ffe0b9; background:#402d21; border-radius:8px; }
+#play-arena.board-expanded .viewport-bottom-controls { margin-bottom:max(16px,env(safe-area-inset-bottom)); }
+.account-card { width:480px; }
+.account-card .input-text { font:inherit; font-size:16px; min-height:44px; }
+.account-card .form-label { margin-top:16px; }
+.field-help { font-size:12px; color:#b4bfd0; line-height:1.6; margin:8px 0 16px; }
+#account-message { font-size:14px; line-height:1.6; color:#edcc94; margin-bottom:12px; }
+#account-form > button { width:100%; margin-top:12px; }
+.text-button { background:transparent; border:0; color:#e6bd7e; cursor:pointer; padding:12px 0; font:inherit; font-size:13px; }
+.account-actions { display:flex; flex-wrap:wrap; gap:8px; }
+@media (max-width:760px) {
+    .board-toolbar { padding:12px 16px 0; }
+    #play-arena.board-expanded .board-room-label { display:none; }
+    #play-arena.board-expanded .board-toolbar { flex-wrap:wrap; gap:8px; }
+    #play-arena.board-expanded .fullscreen-settings { gap:8px; margin:0; flex:1; }
+    .fullscreen-settings label { font-size:0; }
+    .fullscreen-settings select { max-width:135px; font-size:12px; }
+    #btn-board-new { font-size:12px; padding:6px 10px; }
+    #fullscreen-move-controls form { flex-wrap:wrap; gap:0; }
+    #fullscreen-move-controls .move-input-row { flex:1; }
+    #fullscreen-move-controls .promotion-options { margin-left:8px; }
+    #play-arena.board-expanded .viewport-bottom-controls { padding:8px; margin:0 8px 8px; }
+}

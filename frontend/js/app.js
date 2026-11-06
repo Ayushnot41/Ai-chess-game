@@ -34,6 +34,8 @@ class ChessApp {
         this.initConfetti();
         this.bindEvents();
         this.bindExperience();
+        this.fullscreen = new BoardFullscreen(this);
+        this.account = new ChessAccount(this);
         window.chessAPI.historyProvider = fen => fen === this.chess.fen() ? {
             initial_fen: this.initialFen,
             moves: this.chess.history({verbose:true}).map(m => m.from + m.to + (m.promotion || ''))
@@ -594,8 +596,34 @@ class ChessApp {
     }
     showError(message) {
         const box = document.getElementById('game-error'); box.textContent = message; box.hidden = false;
+        const arena = document.getElementById('arena-error'); arena.textContent = message; arena.hidden = false;
     }
-    clearError() { document.getElementById('game-error').hidden = true; }
+    clearError() {
+        document.getElementById('game-error').hidden = true;
+        document.getElementById('arena-error').hidden = true;
+    }
+    serializeGame() {
+        return {version:1,initialFen:this.initialFen,
+            moves:this.chess.history({verbose:true}).map(move => move.from+move.to+(move.promotion||'')),
+            playerColor:this.playerColor,aiDepth:this.aiDepth,kidMode:this.kidMode,theme:this.board3D.theme};
+    }
+    loadAccountGame(saved) {
+        const candidate = new Chess();
+        if (!candidate.load(saved.initialFen)) throw new Error('The saved position is invalid.');
+        for (const uci of saved.moves) {
+            if (!candidate.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]||'q'})) throw new Error('The saved game contains an invalid move.');
+        }
+        this.invalidatePosition(); this.chess=candidate; this.initialFen=saved.initialFen;
+        this.playerColor=saved.playerColor; this.aiDepth=saved.aiDepth; this.kidMode=saved.kidMode;
+        this.history=candidate.history({verbose:true}); this.board3D.playerColor=this.playerColor;
+        this.board3D.loadFEN(candidate.fen()); this.board3D.setTheme(saved.theme);
+        this.board3D.resetCameraView(this.playerColor);
+        document.getElementById('select-theme').value=saved.theme;
+        this.syncMode(); this.refreshPosition(); this.saveGame(); this.closeModals();
+        if (!this.checkGameOver()) {
+            if (this.isPlayerTurn()) this.requestPredictions(); else this.triggerAIMove();
+        }
+    }
     saveGame() {
         try {
             localStorage.setItem('grandmaster-save-v1', JSON.stringify({version:1, initialFen:this.initialFen,
@@ -633,7 +661,8 @@ class ChessApp {
         const link = document.createElement('a'); link.href = url; link.download = 'grandmaster-game.pgn'; link.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
-    openModal(id) {
+    async openModal(id) {
+        if (this.fullscreen?.active) await this.fullscreen.exit();
         this.modalReturnFocus = document.activeElement;
         const modal = document.getElementById(id); modal.classList.remove('hidden');
         document.querySelector('.app-header').inert = true;
@@ -658,7 +687,7 @@ class ChessApp {
             if (!modal) return;
             if (event.key === 'Escape') this.closeModals();
             if (event.key === 'Tab') {
-                const controls = [...modal.querySelectorAll('input, button')].filter(el => !el.disabled);
+                const controls = [...modal.querySelectorAll('input, button')].filter(el => !el.disabled && el.getClientRects().length > 0);
                 const first = controls[0], last = controls[controls.length-1];
                 if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
                 else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }

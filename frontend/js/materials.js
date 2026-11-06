@@ -12,11 +12,11 @@ class ChessMaterials {
             for (let x = 0; x < 512; x++) {
                 seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
                 const bend = Math.sin(y * .012) * 8 + Math.sin(y * .034 + x * .002) * 2;
-                const grain = Math.sin((x + bend) * .19) * 2.6 + Math.sin((x + bend) * .67) * 1.3;
+                const grain = Math.sin((x + bend) * .19) * 1.1 + Math.sin((x + bend) * .67) * .6;
                 const pore = seed / 4294967296 * 3;
-                const wave = Math.sin(x * .025 + Math.sin(y * .006)) * 5;
+                const wave = Math.sin(x * .025 + Math.sin(y * .006)) * 3;
                 const value = grain + pore + wave;
-                const rgb = light ? [191,161,119] : [79,45,28];
+                const rgb = light ? [191,172,137] : [89,64,43];
                 const index = (y * 512 + x) * 4;
                 for (let channel = 0; channel < 3; channel++) pixels.data[index+channel] = rgb[channel] + value;
                 pixels.data[index+3] = 255;

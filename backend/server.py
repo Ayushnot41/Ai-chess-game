@@ -11,12 +11,16 @@ Serves RESTful endpoints for the 3D Chess Game:
 
 import os
 import sys
+from contextlib import asynccontextmanager
 from pathlib import Path
 from threading import BoundedSemaphore
 import chess
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from sqlalchemy.exc import SQLAlchemyError
 from pydantic import BaseModel, Field
 
 # Ensure backend directory is in sys.path
@@ -27,21 +31,66 @@ if backend_dir not in sys.path:
 from backend.engine.evaluator import evaluate_board, get_material_balance, get_game_phase
 from backend.engine.search import SearchEngine
 from backend.engine.predictor import MovePredictor, win_probability
+from backend.accounts import router as account_router
+from backend.database import get_engine
+
+
+@asynccontextmanager
+async def lifespan(_app):
+    get_engine()
+    yield
+    get_engine().dispose()
 
 app = FastAPI(
+    lifespan=lifespan,
     title="Grandmaster-AI Engine API",
     description="Next-Generation 3D Chess Game and Move Predictor Service",
     version="2.0.0",
 )
 
-# CORS setup for web clients
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS setup for web clients (wildcard regex fallback supports Cloudflare, Render, Localhost with credentials)
+_allowed_origins = [origin.strip() for origin in os.getenv("CHESS_ALLOWED_ORIGINS", "").split(",") if origin.strip()]
+if _allowed_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_allowed_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=r"^https?:\/\/.*$",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+app.include_router(account_router)
+
+
+@app.middleware("http")
+async def response_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = "same-origin"
+    response.headers["X-Frame-Options"] = "DENY"
+    if request.url.path.startswith(("/api/auth", "/api/account")):
+        response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error(_request, error):
+    # Never echo password inputs back through an error response.
+    details = [{"loc": item["loc"], "msg": item["msg"], "type": item["type"]} for item in error.errors()]
+    return JSONResponse(status_code=422, content={"detail": details})
+
+
+@app.exception_handler(SQLAlchemyError)
+async def database_error(_request, _error):
+    return JSONResponse(status_code=503, content={"detail": "Account storage is temporarily unavailable. Your local game is safe; try again shortly."})
 
 search_slots = BoundedSemaphore(2)
 

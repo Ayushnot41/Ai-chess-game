@@ -38,7 +38,8 @@ class Board3D {
 
         // 1. Scene
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x0c0f17);
+        this.scene.background = new THREE.Color(0x171e1a);
+        this.scene.fog = new THREE.Fog(0x171e1a, 20, 52);
 
         // 2. Camera
         this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
@@ -51,7 +52,7 @@ class Board3D {
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.1;
+        this.renderer.toneMappingExposure = 0.9;
         this.renderer.outputEncoding = THREE.sRGBEncoding;
         this.studioTarget = window.chessMaterials.studio(this.renderer);
         this.scene.environment = this.studioTarget.texture;
@@ -70,6 +71,11 @@ class Board3D {
 
         // 6. Build Board
         this.buildBoard();
+        const table = new THREE.Mesh(new THREE.PlaneGeometry(120,120), new THREE.MeshStandardMaterial({
+            color:new THREE.Color(0x25382c).convertSRGBToLinear(), roughness:0.98, metalness:0, envMapIntensity:0.25
+        }));
+        table.rotation.x=-Math.PI/2; table.position.y=-0.60; table.receiveShadow=true;
+        this.scene.add(table);
 
         // 7. Event Listeners
         window.addEventListener('resize', () => this.onWindowResize());

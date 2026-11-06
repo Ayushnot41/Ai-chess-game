@@ -4,130 +4,10 @@ Current setup and verified behavior: [Engineering handoff](docs/HANDOFF.md). Sou
 
 <div align="center">
 
-<!-- LIVE MOTION GRAPHICS SVG BANNER (ANIMATED VIA EMBEDDED CSS KEYFRAMES) -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 280" width="100%" height="280">
-  <defs>
-    <style>
-      @keyframes float {
-        0% { transform: translateY(0px) rotate(0deg); }
-        50% { transform: translateY(-8px) rotate(1deg); }
-        100% { transform: translateY(0px) rotate(0deg); }
-      }
-      @keyframes pulseGlow {
-        0% { opacity: 0.35; filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.4)); }
-        50% { opacity: 0.85; filter: drop-shadow(0 0 24px rgba(56, 189, 248, 0.9)); }
-        100% { opacity: 0.35; filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.4)); }
-      }
-      @keyframes radarSweep {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-      @keyframes beamScan {
-        0% { x: -200; opacity: 0; }
-        50% { opacity: 0.6; }
-        100% { x: 1000; opacity: 0; }
-      }
-      .floating-king { animation: float 4s ease-in-out infinite; transform-origin: 180px 140px; }
-      .floating-knight { animation: float 3.2s ease-in-out infinite reverse; transform-origin: 120px 170px; }
-      .pulsing-aura { animation: pulseGlow 3s ease-in-out infinite; }
-      .radar-sweep { animation: radarSweep 10s linear infinite; transform-origin: 180px 140px; }
-      .scanline { animation: beamScan 4s linear infinite; }
-    </style>
-
-    <linearGradient id="cyberBg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#070a14" />
-      <stop offset="40%" stop-color="#0f172a" />
-      <stop offset="100%" stop-color="#030712" />
-    </linearGradient>
-
-    <linearGradient id="goldSheen" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fef08a" />
-      <stop offset="50%" stop-color="#f59e0b" />
-      <stop offset="100%" stop-color="#b45309" />
-    </linearGradient>
-
-    <linearGradient id="emeraldSheen" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#6ee7b7" />
-      <stop offset="100%" stop-color="#059669" />
-    </linearGradient>
-
-    <linearGradient id="cyanSheen" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#7dd3fc" />
-      <stop offset="100%" stop-color="#0284c7" />
-    </linearGradient>
-  </defs>
-
-  <!-- Canvas Surface -->
-  <rect width="1000" height="280" rx="18" fill="url(#cyberBg)" stroke="rgba(56, 189, 248, 0.25)" stroke-width="2"/>
-
-  <!-- Scanning Motion Laser Beam -->
-  <rect class="scanline" y="0" width="180" height="280" fill="url(#cyanSheen)" opacity="0.08" />
-
-  <!-- 3D Isometric Chessboard Stage -->
-  <g transform="translate(40, 20)">
-    <!-- Ambient Radar Grid Overlay -->
-    <circle cx="180" cy="140" r="110" fill="none" stroke="rgba(56, 189, 248, 0.15)" stroke-dasharray="4,6"/>
-    <circle cx="180" cy="140" r="70" fill="none" stroke="rgba(56, 189, 248, 0.2)" stroke-dasharray="2,4"/>
-    <line class="radar-sweep" x1="180" y1="140" x2="290" y2="140" stroke="rgba(16, 185, 129, 0.4)" stroke-width="2" />
-
-    <!-- Isometric Diamond Tiles -->
-    <polygon points="180,60 280,115 180,170 80,115" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
-    <polygon points="180,170 280,115 280,135 180,190" fill="#0f172a" />
-    <polygon points="180,170 80,115 80,135 180,190" fill="#090d16" />
-
-    <!-- Sub-Tiles with Parabolic Highlight -->
-    <polygon points="180,60 230,87.5 180,115 130,87.5" fill="#334155" opacity="0.6"/>
-    <polygon points="230,87.5 280,115 230,142.5 180,115" fill="#1e293b" opacity="0.8"/>
-    <polygon points="180,115 230,142.5 180,170 130,142.5" fill="#334155" opacity="0.6"/>
-    <polygon points="130,87.5 180,115 130,142.5 80,115" fill="#1e293b" opacity="0.8"/>
-
-    <!-- Animated 3D King (Center Stage) -->
-    <g class="floating-king">
-      <ellipse cx="180" cy="120" rx="22" ry="10" fill="#000" opacity="0.4"/>
-      <circle class="pulsing-aura" cx="180" cy="100" r="26" fill="url(#goldSheen)"/>
-      <text x="180" y="110" font-size="34" font-family="'Cinzel', serif" text-anchor="middle" fill="#000" font-weight="900">♔</text>
-    </g>
-
-    <!-- Animated 3D Knight (Tactical Outpost) -->
-    <g class="floating-knight">
-      <ellipse cx="125" cy="138" rx="16" ry="8" fill="#000" opacity="0.3"/>
-      <circle class="pulsing-aura" cx="125" cy="125" r="18" fill="url(#cyanSheen)"/>
-      <text x="125" y="132" font-size="22" font-family="'Cinzel', serif" text-anchor="middle" fill="#fff" font-weight="bold">♞</text>
-    </g>
-
-    <!-- Tactical Target Beacon -->
-    <circle cx="235" cy="125" r="8" fill="none" stroke="#ef4444" stroke-width="2"/>
-    <circle cx="235" cy="125" r="3" fill="#ef4444"/>
-  </g>
-
-  <!-- Typography & Identity -->
-  <text x="410" y="80" font-family="'Cinzel', 'Times New Roman', serif" font-size="36" font-weight="800" fill="#ffffff" letter-spacing="3">GRANDMASTER-AI</text>
-  <text x="410" y="115" font-family="'Inter', sans-serif" font-size="16" font-weight="600" fill="#38bdf8">Adversarial Minimax + Alpha-Beta Pruning + Quiescence Engine</text>
-  <text x="410" y="145" font-family="'Inter', sans-serif" font-size="13" fill="#94a3b8">Interactive 3D WebGL Arena • Dual-Persona Usability (Kids to Masters) • Zero-Cost Live Deployment</text>
-
-  <!-- Engineering Badges -->
-  <g transform="translate(410, 175)">
-    <rect width="110" height="28" rx="6" fill="#1e293b" stroke="#10b981" stroke-width="1.2"/>
-    <text x="55" y="19" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#10b981" text-anchor="middle">α-β PRUNING</text>
-  </g>
-
-  <g transform="translate(530, 175)">
-    <rect width="115" height="28" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.2"/>
-    <text x="57" y="19" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#38bdf8" text-anchor="middle">PeSTO TABLES</text>
-  </g>
-
-  <g transform="translate(655, 175)">
-    <rect width="105" height="28" rx="6" fill="#1e293b" stroke="#fbbf24" stroke-width="1.2"/>
-    <text x="52" y="19" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#fbbf24" text-anchor="middle">THREE.JS 3D</text>
-  </g>
-
-  <g transform="translate(770, 175)">
-    <rect width="125" height="28" rx="6" fill="#1e293b" stroke="#a855f7" stroke-width="1.2"/>
-    <text x="62" y="19" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#a855f7" text-anchor="middle">GOOGLE STITCH</text>
-  </g>
-
-  <text x="410" y="240" font-family="'JetBrains Mono', monospace" font-size="11" fill="#64748b">Verified with 36/36 Unit & Regression Tests (Exit Code 0) • Author: @Ayushnot41</text>
-</svg>
+<!-- LIVE 3D MOTION GRAPHICS BANNER (AUTOPLAYING CSS KEYFRAMES VIA STANDALONE SVG) -->
+<a href="https://translated-goto-cost-verification.trycloudflare.com">
+  <img src="assets/hero-3d-motion.svg" width="100%" alt="Grandmaster-AI 3D Live Motion Graphic Banner" />
+</a>
 
 <p align="center">
   <b>An industrial-grade chess intelligence platform uniting game-tree search theory with a photorealistic 3D WebGL arena.</b>
@@ -158,16 +38,22 @@ All user prompts, architectural milestones, and modification blueprints are pres
 
 The following block diagram illustrates the end-to-end data flow from player interactions to the alpha-beta search tree and 3D rendering pipeline:
 
+<p align="center">
+  <img src="assets/architecture-diagram.svg" width="100%" alt="Grandmaster-AI Architecture Vector Diagram" />
+</p>
+
 ```mermaid
 flowchart TD
     subgraph Client ["Client Presentation Tier (Browser)"]
         UI["Three.js 3D WebGL Arena & Glassmorphic HUD"]
         Coach["Child-Friendly Coach & '⚡ Play Best Move'"]
         FX["Web Audio Synthesizer & Confetti Particles"]
+        FS["Fullscreen Focus Arena & Account Storage"]
     end
 
     subgraph API ["Gateway Tier (FastAPI / ASGI)"]
         Router["/api/evaluate | /api/move | /api/predict | /api/heatmap"]
+        Auth["/api/auth & /api/account Persistence"]
         CORS["Wildcard CORS & Bounded Concurrency Slots"]
     end
 
@@ -182,6 +68,7 @@ flowchart TD
 
     UI -->|JSON Fetch Request| Router
     Coach -->|One-Click Trigger| Router
+    FS --> Auth
     Router --> CORS
     CORS --> AB
     AB <--> TT
@@ -201,15 +88,19 @@ flowchart TD
 
 The visual design follows the **Google Stitch Design System** and a **24-Step Spatial Scale** (`4px` to `96px`), ensuring high-contrast readability (WCAG 2.1 AA compliant) and tactile visual hierarchy:
 
+<p align="center">
+  <img src="assets/stitch-palette.svg" width="100%" alt="Google Stitch Design System Palette" />
+</p>
+
 | Token Name | Hex Code | Visual Swatch | Role & Description |
 |---|---|:---:|---|
-| `--bg-canvas` | `#070a14` | <img src="https://via.placeholder.com/24/070a14/070a14.png" width="24" height="24" /> | Deep Obsidian canvas background |
-| `--bg-surface-glass` | `rgba(18, 24, 38, 0.75)` | <img src="https://via.placeholder.com/24/121826/121826.png" width="24" height="24" /> | Glassmorphic HUD backdrop with 16px blur |
-| `--accent-emerald` | `#10b981` | <img src="https://via.placeholder.com/24/10b981/10b981.png" width="24" height="24" /> | "Best Move", winning evaluation, safe landing discs |
-| `--accent-cyan` | `#06b6d4` | <img src="https://via.placeholder.com/24/06b6d4/06b6d4.png" width="24" height="24" /> | "Excellent" move classification, tactical reticles |
-| `--accent-amber` | `#f59e0b` | <img src="https://via.placeholder.com/24/f59e0b/f59e0b.png" width="24" height="24" /> | Turn indicator, last-move highlight, "Kid Mode" pill |
-| `--accent-ruby` | `#ef4444` | <img src="https://via.placeholder.com/24/ef4444/ef4444.png" width="24" height="24" /> | Capture target rings, King-in-check pulsating aura |
-| `--accent-primary` | `#2563eb` | <img src="https://via.placeholder.com/24/2563eb/2563eb.png" width="24" height="24" /> | Primary interactive buttons, navigation triggers |
+| `--bg-canvas` | `#070a14` | <img src="assets/swatch-canvas.svg" width="22" height="22" valign="middle" /> | Deep Obsidian canvas background |
+| `--bg-surface-glass` | `#121826` | <img src="assets/swatch-glass.svg" width="22" height="22" valign="middle" /> | Glassmorphic HUD backdrop with 16px blur |
+| `--accent-emerald` | `#10b981` | <img src="assets/swatch-emerald.svg" width="22" height="22" valign="middle" /> | "Best Move", winning evaluation, safe landing discs |
+| `--accent-cyan` | `#06b6d4` | <img src="assets/swatch-cyan.svg" width="22" height="22" valign="middle" /> | "Excellent" move classification, tactical reticles |
+| `--accent-amber` | `#f59e0b` | <img src="assets/swatch-amber.svg" width="22" height="22" valign="middle" /> | Turn indicator, last-move highlight, "Kid Mode" pill |
+| `--accent-ruby` | `#ef4444` | <img src="assets/swatch-ruby.svg" width="22" height="22" valign="middle" /> | Capture target rings, King-in-check pulsating aura |
+| `--accent-primary` | `#2563eb` | <img src="assets/swatch-primary.svg" width="22" height="22" valign="middle" /> | Primary interactive buttons, navigation triggers |
 
 Full design system specifications reside in [`design-system/MASTER.md`](design-system/MASTER.md) and [`design-system/stitch_manifest.json`](design-system/stitch_manifest.json).
 
@@ -298,12 +189,19 @@ Ai chess game/
 │   ├── ISSUE_TEMPLATE/          # Structured issue and bug report forms
 │   ├── PULL_REQUEST_TEMPLATE.md # Engineering PR checklist
 │   └── CODEOWNERS               # Attributed to @Ayushnot41
+├── assets/
+│   ├── hero-3d-motion.svg       # Standalone 3D animated motion graphic banner
+│   ├── stitch-palette.svg       # Google Stitch design tokens visual palette
+│   ├── architecture-diagram.svg # Three-tier system architecture vector chart
+│   └── swatch-*.svg             # Native GitHub-compatible color chips
 ├── backend/
 │   ├── engine/
 │   │   ├── __init__.py          # Public engine exports
 │   │   ├── evaluator.py         # PeSTO PST, pawn structure, king safety
 │   │   ├── search.py            # Minimax, Alpha-Beta, Quiescence, Zobrist TT
 │   │   └── predictor.py         # Move predictor, tactical motifs, win %
+│   ├── accounts.py              # User profiles, auth and saved game endpoints
+│   ├── database.py              # SQLite / PostgreSQL persistence engine
 │   ├── cli_game.py              # Unicode/ANSI terminal interactive game
 │   └── server.py                # FastAPI REST server & static mounts
 ├── design-system/
@@ -311,26 +209,33 @@ Ai chess game/
 │   └── stitch_manifest.json     # Machine-readable design specification
 ├── docs/
 │   ├── PROJECT_EVOLUTION_LOG.json # Full JSON archive of prompts, changes & guide
-│   └── RESEARCH.md              # Theoretical capstone foundation
+│   ├── RESEARCH.md              # Theoretical capstone foundation
+│   └── HANDOFF.md               # Operational handoff & verification report
 ├── frontend/
 │   ├── index.html               # 3D WebGL viewport & accessible HUD
 │   ├── css/style.css            # Framer Motion springs & glassmorphism
+│   ├── css/play.css             # Fullscreen focus & board layout rules
 │   └── js/
 │       ├── audio.js             # Procedural Web Audio API sound generator
 │       ├── models.js            # 3D Staunton procedural piece geometries
+│       ├── materials.js         # PBR physically based rendering shaders
 │       ├── board3d.js           # Three.js scene, lighting, arcs, particles
 │       ├── api.js               # Client interface for REST endpoints
+│       ├── fullscreen.js        # Fullscreen distraction-free arena mode
+│       ├── accounts.js          # Cloud/local game save and load manager
 │       └── app.js               # State coordinator, kid mode, confetti
 ├── scripts/
 │   └── blender_render_chess.py  # Blender MCP procedural rendering script
 ├── tests/
 │   ├── test_engine.py           # Engine search & heuristic unit tests
 │   ├── test_api.py              # FastAPI endpoint integration tests
-│   └── test_regressions.py      # Concurrency & timeout regression tests
+│   ├── test_regressions.py      # Concurrency & timeout regression tests
+│   └── test_accounts.py         # Account persistence & save tests
 ├── deploy_free_live.bat         # 1-Click Zero-Cost Live Global Deployment
 ├── run_web.bat                  # 1-Click Local 3D Web Launcher
 ├── run_cli.bat                  # 1-Click Terminal CLI Game Launcher
 ├── run_tests.bat                # 1-Click Test Suite Executor
+├── render.yaml                  # Optional cloud deployment manifest
 ├── LICENSE                      # MIT License
 └── README.md                    # Technical documentation & live motion graphics
 ```

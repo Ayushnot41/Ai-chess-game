@@ -66,3 +66,10 @@ cloudflared*
 .qa/layout_ui.py
 .qa/vendor_assets.py
 .pytest_cache/
+data/
+*.db
+*.db-wal
+*.db-shm
+.env.*
+!.env.example
+.qa/python/
