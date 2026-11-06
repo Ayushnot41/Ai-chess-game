@@ -17,6 +17,7 @@ Current setup and verified behavior: [Engineering handoff](docs/HANDOFF.md). Sou
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com)
 [![Three.js](https://img.shields.io/badge/Three.js-r128-black.svg?logo=three.js)](https://threejs.org)
 [![Tests](https://img.shields.io/badge/Tests-36%20Passed-10b981.svg)](https://pytest.org)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FAyushnot41%2FAi-chess-game)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-trycloudflare.com-success.svg)](https://translated-goto-cost-verification.trycloudflare.com)
 
@@ -31,6 +32,27 @@ Current setup and verified behavior: [Engineering handoff](docs/HANDOFF.md). Sou
 2. **Accessible Luxury Presentation**: A responsive **Three.js WebGL 3D Platform** styled with **Google Stitch Design Tokens**, **Framer Motion spring physics**, and a dual-persona design allowing both a 7-year-old child and a seasoned tournament master to play seamlessly.
 
 All user prompts, architectural milestones, and modification blueprints are preserved in machine-readable format in [`docs/PROJECT_EVOLUTION_LOG.json`](docs/PROJECT_EVOLUTION_LOG.json).
+
+---
+
+## 🚀 Deploy as a Single Live Link on Vercel (100% Free)
+
+You can host both the **Three.js 3D WebGL Frontend** and the **FastAPI AI Python Engine** under **ONE SINGLE PERMANENT LINK** (e.g. `https://ai-chess-game.vercel.app`) with zero cost on Vercel's free global tier.
+
+### Method 1: Instant 1-Click Web Deployment (Easiest)
+1. Click the official Vercel deploy button:
+   [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FAyushnot41%2FAi-chess-game)
+2. Log in with your GitHub account (`Ayushnot41`).
+3. Click **Deploy**. Vercel reads [`vercel.json`](vercel.json) and [`api/index.py`](api/index.py), sets up the Python serverless runtime, and serves the 3D frontend.
+4. Your permanent single link is created instantly with a free SSL certificate!
+
+### Method 2: 1-Command PowerShell Deployment
+You already have Vercel CLI installed on your machine. Simply run:
+```powershell
+vercel --prod
+```
+- Press Enter to confirm defaults.
+- Vercel automatically uploads the project and prints your unified live link directly in PowerShell!
 
 ---
 
@@ -150,9 +172,9 @@ $$\text{WinProbability}(\text{Eval}_{\text{cp}}) = \frac{1}{1 + 10^{-\text{Eval}
 
 ---
 
-## 🌐 100% Free Live Online Deployment
+## 🌐 Alternative 1-Click Free Local Live Tunnel
 
-You can run the entire game live over the public internet for free with **zero cloud subscription costs**:
+You can also run the game live directly from your laptop without cloud hosting using the included Cloudflare Tunnel launcher:
 
 ```bash
 # 1-Click Launch (Runs local FastAPI backend + Cloudflare Tunnel)
@@ -189,6 +211,8 @@ Ai chess game/
 │   ├── ISSUE_TEMPLATE/          # Structured issue and bug report forms
 │   ├── PULL_REQUEST_TEMPLATE.md # Engineering PR checklist
 │   └── CODEOWNERS               # Attributed to @Ayushnot41
+├── api/
+│   └── index.py                 # Vercel Serverless Function entrypoint (FastAPI)
 ├── assets/
 │   ├── hero-3d-motion.svg       # Standalone 3D animated motion graphic banner
 │   ├── stitch-palette.svg       # Google Stitch design tokens visual palette
@@ -235,7 +259,8 @@ Ai chess game/
 ├── run_web.bat                  # 1-Click Local 3D Web Launcher
 ├── run_cli.bat                  # 1-Click Terminal CLI Game Launcher
 ├── run_tests.bat                # 1-Click Test Suite Executor
-├── render.yaml                  # Optional cloud deployment manifest
+├── vercel.json                  # Unified Single-Link Vercel deployment manifest
+├── render.yaml                  # Alternative Render.com cloud manifest
 ├── LICENSE                      # MIT License
 └── README.md                    # Technical documentation & live motion graphics
 ```
