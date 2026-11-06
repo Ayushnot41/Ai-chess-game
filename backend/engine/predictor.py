@@ -133,13 +133,13 @@ class MovePredictor:
         side = "White" if board.turn == chess.WHITE else "Black"
         win_pct = win_probability(eval_cp if side == "White" else -eval_cp)
 
-        return f"Move **{san}**: {primary}{secondary} Evaluates to {'+' if eval_cp > 0 else ''}{eval_cp/100:.2f} ({win_pct}% win rate for {side})."
+        return f"Move **{san}**: {primary}{secondary} Evaluation: {'+' if eval_cp > 0 else ''}{eval_cp/100:.2f}. Estimated advantage for {side}: {win_pct}% (heuristic, not a measured win rate)."
 
-    def predict_candidates(self, board: chess.Board, top_k: int = 3, depth: int = 3) -> list[dict]:
+    def predict_candidates(self, board: chess.Board, top_k: int = 3, depth: int = 3, time_limit: float = 4.0) -> list[dict]:
         """Evaluates and ranks top-K candidate moves with explanations."""
         import time
         legal_moves = list(board.legal_moves)
-        if not legal_moves:
+        if not legal_moves or self.search.terminal_score(board, 0) is not None:
             return []
 
         candidates = []
@@ -147,15 +147,40 @@ class MovePredictor:
 
         # Reset search limits for clean evaluation
         self.search.reset_stats()
-        self.search.start_time = time.time()
-        self.search.time_limit = 4.0
+        self.search.start_time = time.monotonic()
+        self.search.time_limit = time_limit
         self.search.stop_search = False
 
+        # Keep every candidate at the same fully completed depth. An expired
+        # search returns a bound, not a score suitable for ranking moves.
+        scores = {}
         for move in legal_moves:
             board.push(move)
-            # Search after this move from opponent perspective
-            score = -self.search.negamax(board, max(0, depth - 1), -999999, 999999, 1)
-            board.pop()
+            try:
+                terminal = self.search.terminal_score(board, 1)
+                scores[move] = -terminal if terminal is not None else evaluate_board(board) * turn_factor
+            finally:
+                board.pop()
+
+        completed_depth = 0
+        for current_depth in range(1, depth + 1):
+            iteration = {}
+            for move in self.search.order_moves(board, legal_moves):
+                board.push(move)
+                try:
+                    score = -self.search.negamax(board, current_depth - 1, -999999, 999999, 1)
+                finally:
+                    board.pop()
+                if self.search.stop_search:
+                    break
+                iteration[move] = score
+            if self.search.stop_search:
+                break
+            scores = iteration
+            completed_depth = current_depth
+
+        for move in legal_moves:
+            score = scores[move]
 
             eval_white = score * turn_factor
             san = board.san(move)
@@ -170,6 +195,7 @@ class MovePredictor:
                 "piece": PIECE_NAMES.get(board.piece_type_at(move.from_square), "pawn"),
                 "eval_white": eval_white,
                 "eval_relative": score,
+                "depth": completed_depth,
                 "win_probability": win_probability(eval_white),
                 "motifs": motifs,
                 "explanation": explanation,

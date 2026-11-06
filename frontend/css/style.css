@@ -116,12 +116,16 @@ body {
     font-weight: 600;
     cursor: pointer;
     box-shadow: 0 4px 14px var(--primary-glow);
-    transition: all 0.2s;
+    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.65);
+}
+
+.btn-primary:active {
+    transform: translateY(1px) scale(0.98);
 }
 
 .btn-secondary {
@@ -133,13 +137,75 @@ body {
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-secondary:hover, .btn-secondary.active {
     background: rgba(51, 65, 85, 0.9);
     border-color: var(--cyan);
     color: #fff;
+    transform: translateY(-1px);
+}
+
+.btn-secondary:active {
+    transform: translateY(1px);
+}
+
+/* Framer Motion Spring Pulse for Auto-Move */
+#btn-auto-move {
+    position: relative;
+    overflow: hidden;
+    animation: pulse-glow 2.2s infinite alternate cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pulse-glow {
+    0% {
+        box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
+        transform: scale(1.0);
+    }
+    100% {
+        box-shadow: 0 0 24px rgba(16, 185, 129, 0.75);
+        transform: scale(1.02);
+    }
+}
+
+/* Turn Notification Banner */
+.turn-banner-container {
+    position: absolute;
+    top: 68px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 15;
+    pointer-events: none;
+}
+
+.turn-banner {
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.turn-banner.player-turn {
+    border-color: var(--emerald);
+    color: #6ee7b7;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+.turn-banner.ai-turn {
+    border-color: var(--amber);
+    color: #fcd34d;
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
 }
 
 /* Main Layout */

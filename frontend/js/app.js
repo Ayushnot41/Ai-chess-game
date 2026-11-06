@@ -639,6 +639,21 @@ class ChessApp {
         if (statusText) {
             statusText.innerText = message;
         }
+
+        const banner = document.getElementById('turn-banner');
+        const bannerIcon = document.getElementById('turn-banner-icon');
+        const bannerText = document.getElementById('turn-banner-text');
+        if (banner && bannerText && bannerIcon) {
+            if (thinking) {
+                banner.className = 'turn-banner ai-turn';
+                bannerIcon.innerText = '🤖';
+                bannerText.innerText = `AI IS THINKING... (Minimax Depth ${this.aiDepth})`;
+            } else {
+                banner.className = 'turn-banner player-turn';
+                bannerIcon.innerText = '🟢';
+                bannerText.innerText = "YOUR TURN — Click a piece or tap '⚡ Play Best Move'";
+            }
+        }
     }
 
     showNewGameModal() {

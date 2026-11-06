@@ -15,18 +15,13 @@ import chess
 import chess.pgn
 
 # Ensure backend directory is in sys.path
-backend_dir = str(Path(__file__).resolve().parent)
+backend_dir = str(Path(__file__).resolve().parent.parent)
 if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
-try:
-    from engine.evaluator import evaluate_board, get_material_balance
-    from engine.search import SearchEngine
-    from engine.predictor import MovePredictor, win_probability
-except ImportError:
-    from backend.engine.evaluator import evaluate_board, get_material_balance
-    from backend.engine.search import SearchEngine
-    from backend.engine.predictor import MovePredictor, win_probability
+from backend.engine.evaluator import evaluate_board, get_material_balance, get_game_phase
+from backend.engine.search import SearchEngine
+from backend.engine.predictor import MovePredictor, win_probability
 
 UNICODE_PIECES = {
     "P": "♙", "N": "♘", "B": "♗", "R": "♖", "Q": "♕", "K": "♔",
@@ -125,7 +120,7 @@ def play_cli_game():
     board = chess.Board()
     search = SearchEngine()
     predictor = MovePredictor(search)
-    ai_depth = 4
+    ai_depth = 2
 
     print(f"Choose your side:")
     print(f"  [1] White (Human plays first)")
@@ -133,10 +128,9 @@ def play_cli_game():
     choice = input("Select [1/2] (Default 1): ").strip()
     human_color = chess.BLACK if choice == "2" else chess.WHITE
 
-    game_history = chess.pgn.Game()
-    node = game_history
+    print("Type a move such as e4 or e2e4. Try 'hint', 'undo', or 'help' at any time.")
 
-    while not board.is_game_over():
+    while SearchEngine.terminal_score(board, 0) is None:
         print_board_side_by_side(board, predictor, ai_depth)
 
         # Check conditions
@@ -167,7 +161,7 @@ def play_cli_game():
 
             if cmd_lower == "eval":
                 print(f"\nDetailed Board Evaluation: {evaluate_board(board)} centipawns")
-                phase = evaluate_board(board)
+                phase = get_game_phase(board)
                 print(f"Game State Phase: {phase}")
                 input("Press Enter to resume...")
                 continue
@@ -187,7 +181,7 @@ def play_cli_game():
                     board.pop()
                     board.pop()
                     print(f"{AMBER}Retracted 2 moves (Human + AI).{RESET}")
-                elif len(board.move_stack) == 1:
+                elif len(board.move_stack) == 1 and human_color == chess.WHITE:
                     board.pop()
                     print(f"{AMBER}Retracted 1 move.{RESET}")
                 else:
@@ -207,7 +201,7 @@ def play_cli_game():
                 continue
 
             if cmd_lower == "pgn":
-                print(f"\nCurrent PGN:\n{game_history}")
+                print(f"\nCurrent PGN:\n{export_game(board)}")
                 input("Press Enter to resume...")
                 continue
 
@@ -241,7 +235,6 @@ Available Commands:
                     move = None
 
             if move and move in board.legal_moves:
-                node = node.add_variation(move)
                 board.push(move)
             else:
                 print(f"{RED}Invalid move '{user_input}'. Type 'help' for instructions.{RESET}")
@@ -260,7 +253,6 @@ Available Commands:
                 print(f"AI plays: {BOLD}{EMERALD}{san}{RESET} ({reason})")
                 print(f"{DIM}[Depth: {result['depth']} | Nodes: {result['nodes']} | NPS: {result['nps']:,} | Time: {result['time_ms']}ms]{RESET}\n")
 
-                node = node.add_variation(best_move)
                 board.push(best_move)
             else:
                 print(f"{RED}No legal moves for AI.{RESET}")
@@ -269,7 +261,7 @@ Available Commands:
     # Game Over
     print_board_side_by_side(board, predictor, ai_depth)
     print(f"\n{BOLD}════ GAME OVER ════{RESET}")
-    result_str = board.result()
+    result_str = board.result() if board.is_game_over() else "1/2-1/2"
     if board.is_checkmate():
         winner = "Black" if board.turn == chess.WHITE else "White"
         print(f"{BOLD}{EMERALD}Checkmate! {winner} wins the game! ({result_str}){RESET}")
@@ -283,5 +275,18 @@ Available Commands:
         print(f"{AMBER}Game ended: {result_str}{RESET}")
 
 
+def export_game(board):
+    """Build the export from the current stack, including after an undo."""
+    game = chess.pgn.Game.from_board(board)
+    if SearchEngine.terminal_score(board, 0) is not None and not board.is_checkmate():
+        game.headers["Result"] = "1/2-1/2"
+    return str(game)
+
+
 if __name__ == "__main__":
-    play_cli_game()
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    try:
+        play_cli_game()
+    except (EOFError, KeyboardInterrupt):
+        print("\nThanks for playing!")
