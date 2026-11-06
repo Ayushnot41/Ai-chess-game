@@ -133,6 +133,7 @@ class ChessApp {
         }
         if (piece && piece.color === this.chess.turn()) {
             this.selectedSquare = square;
+            window.soundEngine?.playSelect();
             const moves = this.chess.moves({square, verbose:true});
             this.board3D.showMoveIndicators(moves.map(move => move.to));
             document.getElementById('play-instruction').textContent = moves.length
@@ -286,6 +287,7 @@ class ChessApp {
         const isEnabled = window.soundEngine.toggle();
         const btn = document.getElementById('btn-sound');
         btn.innerText = isEnabled ? '🔊 Sound: ON' : '🔇 Sound: OFF';
+        if (isEnabled) window.soundEngine?.playSelect();
     }
 
     toggleKidMode() {

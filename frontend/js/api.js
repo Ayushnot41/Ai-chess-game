@@ -17,11 +17,21 @@ class ChessAPI {
         let timedOut = false;
         const timer = setTimeout(() => { timedOut = true; controller.abort(); }, 15000);
         try {
-            const response = await fetch(`${this.baseUrl}/api/${endpoint}`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...(this.historyProvider?.(payload.fen) || {}), ...payload }),
-                signal: controller.signal
-            });
+            let retries = endpoint === 'move' ? 2 : 0;
+            let response;
+            while (true) {
+                response = await fetch(`${this.baseUrl}/api/${endpoint}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...(this.historyProvider?.(payload.fen) || {}), ...payload }),
+                    signal: controller.signal
+                });
+                if (response.status === 503 && retries > 0) {
+                    retries--;
+                    await new Promise(r => setTimeout(r, 250));
+                    continue;
+                }
+                break;
+            }
             if (!response.ok) {
                 const body = await response.json().catch(() => ({}));
                 throw new Error(typeof body.detail === 'string' ? body.detail : `Request failed (${response.status}). Please retry.`);

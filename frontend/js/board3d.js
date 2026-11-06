@@ -86,8 +86,9 @@ class Board3D {
             this.pointerStart = {x:event.clientX, y:event.clientY, id:event.pointerId};
         });
         this.renderer.domElement.addEventListener('pointerup', event => {
-            if (this.pointerStart?.id === event.pointerId &&
-                Math.hypot(event.clientX-this.pointerStart.x, event.clientY-this.pointerStart.y) < 6) this.onPointerDown(event);
+            if (this.pointerStart && Math.hypot(event.clientX-this.pointerStart.x, event.clientY-this.pointerStart.y) < 16) {
+                this.onPointerDown(event);
+            }
             this.pointerStart = null;
         });
         this.renderer.domElement.addEventListener('pointercancel', () => { this.pointerStart = null; });
@@ -456,6 +457,7 @@ class Board3D {
 
             const mesh = new THREE.Mesh(isTargetEnemy ? captureGeom : freeGeom, mat);
             mesh.position.set(coords.x, 0.13, coords.z);
+            mesh.userData.square = sq;
             this.scene.add(mesh);
             this.indicators.push(mesh);
         });
@@ -617,15 +619,58 @@ class Board3D {
         this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
         this.raycaster.setFromCamera(this.mouse, this.camera);
-        const intersects = this.raycaster.intersectObjects([...this.tiles, ...Object.values(this.pieceMeshes).map(piece => piece.mesh)], true);
 
-        if (intersects.length > 0) {
-            let clickedTile = intersects[0].object;
-            while (clickedTile && !clickedTile.userData.square) clickedTile = clickedTile.parent;
-            const sq = clickedTile?.userData.square;
-            if (sq && this.onSquareClick) {
-                this.onSquareClick(sq);
+        // 1. Check if the ray hits an active Move Indicator directly
+        if (this.indicators.length > 0) {
+            const indicatorHits = this.raycaster.intersectObjects(this.indicators, false);
+            if (indicatorHits.length > 0 && indicatorHits[0].object.userData?.square) {
+                if (this.onSquareClick) this.onSquareClick(indicatorHits[0].object.userData.square);
+                return;
             }
+        }
+
+        // 2. Exact chessboard surface plane intersection (y = 0.06)
+        const boardPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.06);
+        const planePt = new THREE.Vector3();
+        let planeSq = null;
+        if (this.raycaster.ray.intersectPlane(boardPlane, planePt)) {
+            const file = Math.floor(planePt.x + 4.0);
+            const rank = Math.floor(4.0 - planePt.z);
+            if (file >= 0 && file <= 7 && rank >= 0 && rank <= 7) {
+                planeSq = this.coordsToSquare(file, rank);
+            }
+        }
+
+        // 3. Raycast piece meshes & tiles
+        const pieces = Object.values(this.pieceMeshes).map(p => p.mesh);
+        const meshHits = this.raycaster.intersectObjects([...this.tiles, ...pieces], true);
+
+        let clickedSq = null;
+        if (meshHits.length > 0) {
+            for (const hit of meshHits) {
+                let obj = hit.object;
+                while (obj && !obj.userData?.square) obj = obj.parent;
+                if (obj && obj.userData?.square) {
+                    clickedSq = obj.userData.square;
+                    break;
+                }
+            }
+        }
+
+        // 4. Resolve final square
+        let finalSq = planeSq || clickedSq;
+        if (clickedSq && this.pieceMeshes[clickedSq]) {
+            if (clickedSq === planeSq) {
+                finalSq = clickedSq;
+            } else if (!this.selectedSquare) {
+                finalSq = (planeSq && this.pieceMeshes[planeSq]) ? planeSq : clickedSq;
+            } else {
+                finalSq = planeSq || clickedSq;
+            }
+        }
+
+        if (finalSq && this.onSquareClick) {
+            this.onSquareClick(finalSq);
         }
     }
 

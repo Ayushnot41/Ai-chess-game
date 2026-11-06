@@ -14,6 +14,11 @@ import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 from threading import BoundedSemaphore
+
+from dotenv import load_dotenv
+
+# Load local environment variables from .env if present
+load_dotenv()
 import chess
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -97,7 +102,7 @@ search_slots = BoundedSemaphore(2)
 
 def search_capacity():
     """Keep CPU work bounded and return a retryable response when busy."""
-    if not search_slots.acquire(blocking=False):
+    if not search_slots.acquire(blocking=True, timeout=0.2):
         raise HTTPException(503, "The engine is busy. Please try again shortly.", headers={"Retry-After": "2"})
     try:
         yield
@@ -161,6 +166,7 @@ def game_result(board):
     return board.result() if board.is_game_over() else "1/2-1/2" if game_finished(board) else None
 
 
+@app.get("/status")
 @app.get("/api/status")
 def get_status():
     """Engine health check and metadata."""
@@ -178,6 +184,7 @@ def get_status():
     }
 
 
+@app.post("/evaluate")
 @app.post("/api/evaluate")
 def evaluate_position(req: FenRequest):
     """Calculates static evaluation, material balance, and win probability."""
@@ -207,6 +214,7 @@ def evaluate_position(req: FenRequest):
     }
 
 
+@app.post("/move", dependencies=[Depends(search_capacity)])
 @app.post("/api/move", dependencies=[Depends(search_capacity)])
 def calculate_ai_move(req: MoveRequest):
     """Calculates optimal AI move using Alpha-Beta pruning search."""
@@ -263,6 +271,7 @@ def calculate_ai_move(req: MoveRequest):
     }
 
 
+@app.post("/predict", dependencies=[Depends(search_capacity)])
 @app.post("/api/predict", dependencies=[Depends(search_capacity)])
 def predict_moves(req: PredictRequest):
     """Generates ranked candidate moves with win probabilities and tactical explanations."""
@@ -284,6 +293,7 @@ def predict_moves(req: PredictRequest):
     }
 
 
+@app.post("/heatmap")
 @app.post("/api/heatmap")
 def get_control_heatmap(req: FenRequest):
     """Calculates 64-square White vs Black square dominance matrix."""
@@ -297,6 +307,7 @@ def get_control_heatmap(req: FenRequest):
     }
 
 
+@app.post("/validate")
 @app.post("/api/validate")
 def validate_move(req: ValidateMoveRequest):
     """Validates user move against current board state and returns next state."""

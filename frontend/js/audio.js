@@ -68,6 +68,24 @@ class SoundEngine {
         }
     }
 
+    playSelect() {
+        this._scheduleSound((ctx, now) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(520, now);
+            osc.frequency.exponentialRampToValueAtTime(280, now + 0.035);
+
+            gain.gain.setValueAtTime(0.35, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+
+            osc.connect(gain);
+            gain.connect(this.masterGain || ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.045);
+        });
+    }
+
     playMove() {
         this._scheduleSound((ctx, now) => {
             // 1. High transient knock (wood contact)
