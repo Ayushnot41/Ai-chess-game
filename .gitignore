@@ -57,3 +57,12 @@ Thumbs.db
 # Executables & Cloudflare Tunnel
 *.exe
 cloudflared*
+
+# Local browser-test downloads and generated captures
+.qa/node_modules/
+.qa/*.png
+.qa/package*.json
+.qa/implement_ui.py
+.qa/layout_ui.py
+.qa/vendor_assets.py
+.pytest_cache/

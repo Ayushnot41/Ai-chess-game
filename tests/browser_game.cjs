@@ -1,11 +1,14 @@
 /** Run after starting uvicorn on port 8017; npm install --prefix .qa playwright. */
-const { chromium } = require('../.qa/node_modules/playwright');
+let chromium;
+try { ({chromium} = require('playwright')); }
+catch { ({chromium} = require('../.qa/node_modules/playwright')); }
 const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const base = process.env.CHESS_TEST_URL || 'http://127.0.0.1:8017';
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 (async () => {
+    await fs.mkdir('.qa', {recursive:true});
     const browser = await chromium.launch({channel:'chrome',headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
     const errors = [];
     let checks = 0;
@@ -94,14 +97,26 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 
         // Render both modes and all responsive widths in one inspection batch.
         await page.locator('#btn-kid-mode').click();
+        await pause(600);
         await page.screenshot({path:'.qa/analysis.png',fullPage:true});
         await page.locator('#btn-kid-mode').click();
+        await page.waitForFunction(() => document.getElementById('hud-commentary').textContent.startsWith('Try moving'));
         for (const width of [1024,768,390]) {
             await page.setViewportSize({width,height:844});
             await pause(250);
             assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `overflow at ${width}`); checks++;
         }
         await page.screenshot({path:'.qa/mobile.png',fullPage:true});
+        // No internet is required for the chessboard or rules libraries.
+        await page.route('**/*', route => route.request().url().startsWith(base) ? route.continue() : route.abort());
+        await page.reload({waitUntil:'networkidle'});
+        await page.waitForFunction(() => window.app?.board3D?.renderer && window.app?.cachedPrediction);
+        checks++;
+        // Render a complete 4K layout and verify the WebGL drawing buffer.
+        await page.setViewportSize({width:3840,height:2160});
+        await pause(600);
+        assert(await page.evaluate(() => app.board3D.renderer.domElement.width >= app.board3D.container.clientWidth)); checks++;
+        await page.screenshot({path:'.qa/ultra-hd.png'});
         assert.equal(errors.length,0,errors.join('\n')); checks++;
         console.log(`PASS: ${checks} browser checks; desktop/mobile screenshots; no page errors.`);
         await context.close();

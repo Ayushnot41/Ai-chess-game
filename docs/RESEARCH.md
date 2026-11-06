@@ -35,3 +35,7 @@ Date: 6 November 2026. Scope: a college demonstration of adversarial chess AI, a
 Planning: compact; context: dependencies and callers; verification: affected behavior plus regression suite; delegation: none. Write scope: backend, frontend, tests, requirements and project documentation. Preserve existing uncommitted changes, design files and deployment scripts; do not operate Antigravity or Gemini sessions.
 
 Acceptance: human and AI can complete legal turns; terminal game works; malformed inputs do not crash the API; simultaneous requests have independent state; deadlines preserve a legal fallback; checks are resolved in tactical search; a new game rejects stale responses; special moves render correctly; beginners see clear guidance; desktop and phone layouts remain usable; saved games can resume and export; limitations are documented.
+
+## Result and visual refinement
+
+The implemented result and verification evidence are recorded in [HANDOFF.md](HANDOFF.md). The later request for sharper, more realistic graphics was addressed with procedural wood textures, beveled board geometry, smoother piece profiles, studio environment lighting, high-DPI output and a verified 3840×2160 render. These remain real-time procedural graphics rather than photographic assets. Impeccable context was invoked once; its directives were not retained in the bounded tool output, so the existing design files and rendered application were used as the visual reference. The polish/craft guidance and UI/UX Pro Max recommendations were read directly.

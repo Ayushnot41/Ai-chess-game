@@ -1,5 +1,7 @@
 # ♔ Grandmaster-AI: 3D Chess Game & Move Predictor Engine
 
+Current setup and verified behavior: [Engineering handoff](docs/HANDOFF.md). Sources and design decisions: [Research sheet](docs/RESEARCH.md).
+
 <div align="center">
 
 <!-- LIVE MOTION GRAPHICS SVG BANNER (ANIMATED VIA EMBEDDED CSS KEYFRAMES) -->

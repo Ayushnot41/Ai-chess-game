@@ -9,16 +9,20 @@ class PieceModelFactory {
     }
 
     createPedestal(radiusBottom = 0.38, radiusTop = 0.28, height = 0.25) {
-        const points = [];
-        const segments = 12;
-        for (let i = 0; i <= segments; i++) {
-            const t = i / segments;
-            const y = t * height;
-            // Elegant turned base curve
-            const r = radiusBottom - (radiusBottom - radiusTop) * Math.sin(t * Math.PI * 0.5);
-            points.push(new THREE.Vector2(r, y));
-        }
-        return new THREE.LatheGeometry(points, 24);
+        return this.turned([
+            new THREE.Vector2(0,0), new THREE.Vector2(radiusBottom*.9,0),
+            new THREE.Vector2(radiusBottom,.035), new THREE.Vector2(radiusBottom,.075),
+            new THREE.Vector2(radiusBottom*.9,.10), new THREE.Vector2(radiusBottom*.92,.14),
+            new THREE.Vector2(radiusBottom*.78,height*.78), new THREE.Vector2(radiusTop,height)
+        ]);
+    }
+
+    turned(profile) {
+        const points = new THREE.SplineCurve(profile).getPoints(profile.length*6);
+        points.forEach(point => { point.x=Math.max(0,point.x); });
+        const last = points[points.length-1];
+        points.push(new THREE.Vector2(0,last.y));
+        return new THREE.LatheGeometry(points,48);
     }
 
     createPawn() {
@@ -37,12 +41,12 @@ class PieceModelFactory {
             new THREE.Vector2(0.20, 0.65), // Collar
             new THREE.Vector2(0.12, 0.68)
         ];
-        const stemGeom = new THREE.LatheGeometry(stemPts, 24);
+        const stemGeom = this.turned(stemPts);
         const stem = new THREE.Mesh(stemGeom);
         group.add(stem);
 
         // Spherical head
-        const headGeom = new THREE.SphereGeometry(0.18, 20, 16);
+        const headGeom = new THREE.SphereGeometry(0.18, 32, 24);
         const head = new THREE.Mesh(headGeom);
         head.position.y = 0.82;
         group.add(head);
@@ -66,7 +70,7 @@ class PieceModelFactory {
             new THREE.Vector2(0.30, 0.75), // Rampart base
             new THREE.Vector2(0.30, 1.00)  // Parapet
         ];
-        const towerGeom = new THREE.LatheGeometry(towerPts, 24);
+        const towerGeom = this.turned(towerPts);
         const tower = new THREE.Mesh(towerGeom);
         group.add(tower);
 
@@ -98,31 +102,40 @@ class PieceModelFactory {
 
         // Horse Head sculpted silhouette (Extruded curved path)
         const shape = new THREE.Shape();
-        shape.moveTo(-0.16, 0.24);
-        shape.lineTo(0.18, 0.24);
-        shape.quadraticCurveTo(0.22, 0.50, 0.28, 0.75); // Breast/neck
-        shape.quadraticCurveTo(0.35, 0.85, 0.28, 0.95); // Muzzle
-        shape.lineTo(0.12, 1.05);                       // Nose/forehead
-        shape.lineTo(0.08, 1.20);                       // Ear tip
-        shape.lineTo(0.02, 1.10);                       // Back of ear
-        shape.quadraticCurveTo(-0.12, 0.90, -0.18, 0.60);// Mane arch
+        shape.moveTo(-0.23, 0.24);
+        shape.lineTo(0.21, 0.24);
+        shape.quadraticCurveTo(0.19, 0.48, 0.04, 0.72);
+        shape.quadraticCurveTo(0.09, 0.83, 0.20, 0.85);
+        shape.lineTo(0.36, 0.82);
+        shape.quadraticCurveTo(0.45, 0.86, 0.39, 0.98);
+        shape.lineTo(0.18, 1.14);
+        shape.lineTo(0.08, 1.30);
+        shape.lineTo(0.01, 1.16);
+        shape.lineTo(-0.10, 1.27);
+        shape.lineTo(-0.13, 1.09);
+        shape.bezierCurveTo(-0.36, 0.94, -0.35, 0.52, -0.23, 0.24);
         shape.closePath();
 
         const extrudeSettings = {
-            depth: 0.24,
+            depth: 0.20,
             bevelEnabled: true,
-            bevelSegments: 4,
+            bevelSegments: 5,
+            curveSegments: 20,
             steps: 1,
             bevelSize: 0.05,
             bevelThickness: 0.04
         };
 
         const headGeom = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-        headGeom.center();
+        headGeom.translate(0,0,-0.1);
         const head = new THREE.Mesh(headGeom);
-        head.position.y = 0.72;
-        head.rotation.y = Math.PI / 2;
-        group.add(head);
+        const sculpture = new THREE.Group(); sculpture.add(head);
+        for (const side of [-1,1]) {
+            const eye = new THREE.Mesh(new THREE.SphereGeometry(.025,12,10),new THREE.MeshStandardMaterial({color:0x19120d,roughness:.5}));
+            eye.position.set(.12,1.035,side*.15); eye.userData.detailMaterial=true; sculpture.add(eye);
+        }
+        sculpture.rotation.y = Math.PI / 2;
+        group.add(sculpture);
 
         group.name = "knight";
         return group;
@@ -146,7 +159,7 @@ class PieceModelFactory {
             new THREE.Vector2(0.15, 1.20), // Taper to tip
             new THREE.Vector2(0.04, 1.30)
         ];
-        const mitreGeom = new THREE.LatheGeometry(mitrePts, 24);
+        const mitreGeom = this.turned(mitrePts);
         const mitre = new THREE.Mesh(mitreGeom);
         group.add(mitre);
 
@@ -177,7 +190,7 @@ class PieceModelFactory {
             new THREE.Vector2(0.28, 1.15),
             new THREE.Vector2(0.36, 1.35)  // Coronet flare
         ];
-        const queenGeom = new THREE.LatheGeometry(queenPts, 24);
+        const queenGeom = this.turned(queenPts);
         const queen = new THREE.Mesh(queenGeom);
         group.add(queen);
 
@@ -220,20 +233,20 @@ class PieceModelFactory {
             new THREE.Vector2(0.30, 1.25),
             new THREE.Vector2(0.34, 1.45)  // Crown flare
         ];
-        const kingGeom = new THREE.LatheGeometry(kingPts, 24);
+        const kingGeom = this.turned(kingPts);
         const king = new THREE.Mesh(kingGeom);
         group.add(king);
 
         // Cross finial: Vertical bar
         const vBarGeom = new THREE.BoxGeometry(0.06, 0.24, 0.06);
         const vBar = new THREE.Mesh(vBarGeom);
-        vBar.position.y = 1.62;
+        vBar.position.y = 1.54;
         group.add(vBar);
 
         // Cross finial: Horizontal bar
         const hBarGeom = new THREE.BoxGeometry(0.18, 0.06, 0.06);
         const hBar = new THREE.Mesh(hBarGeom);
-        hBar.position.y = 1.65;
+        hBar.position.y = 1.57;
         group.add(hBar);
 
         group.name = "king";
@@ -255,7 +268,7 @@ class PieceModelFactory {
         // Apply materials across all child meshes
         const mat = this.getMaterial(isWhite, theme);
         pieceObj.traverse((child) => {
-            if (child.isMesh) {
+            if (child.isMesh && !child.userData.detailMaterial) {
                 child.material.dispose();
                 child.material = mat;
                 child.castShadow = true;
@@ -294,10 +307,13 @@ class PieceModelFactory {
             });
         } else {
             // Classic Wood theme
-            return new THREE.MeshStandardMaterial({
-                color: isWhite ? 0xded0b6 : 0x3d2b1f,
-                roughness: 0.35,
-                metalness: 0.05,
+            return new THREE.MeshPhysicalMaterial({
+                color: isWhite ? 0xe2cda7 : 0x241a15,
+                roughness: 0.3,
+                metalness: 0,
+                clearcoat: 0.26,
+                clearcoatRoughness: 0.25,
+                envMapIntensity: 0.65,
             });
         }
     }

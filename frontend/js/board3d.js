@@ -142,7 +142,7 @@ class Board3D {
             envMapIntensity: 0.45
         });
         const frame = new THREE.Mesh(frameGeom, frameMat);
-        frame.position.y = -0.42;
+        frame.position.y = -0.50;
         frame.receiveShadow = true;
         boardGroup.add(frame);
 
@@ -154,10 +154,10 @@ class Board3D {
             roughness: 0.2
         });
         const inlay = new THREE.Mesh(inlayGeom, inlayMat);
-        inlay.position.y = 0.01;
+        inlay.position.y = -0.065;
         boardGroup.add(inlay);
         const rim = new THREE.Mesh(this.beveledBoard(8.78, .075, .025), new THREE.MeshStandardMaterial({color:0xdbc1a7, map:window.chessMaterials.wood(false), roughness:.33, envMapIntensity:.45}));
-        rim.position.y = .03; rim.receiveShadow = true; boardGroup.add(rim);
+        rim.position.y = -.04; rim.receiveShadow = true; boardGroup.add(rim);
 
         // 64 Tiles
         const tileGeom = new THREE.BoxGeometry(1.0, 0.12, 1.0);
@@ -210,8 +210,8 @@ class Board3D {
         } else {
             // Classic Wood
             return {
-                light: new THREE.MeshStandardMaterial({ color: 0xedd6b1, roughness: 0.4, metalness: 0.05 }),
-                dark: new THREE.MeshStandardMaterial({ color: 0x8a532b, roughness: 0.45, metalness: 0.05 })
+                light: new THREE.MeshStandardMaterial({ color: 0xffffff, map:window.chessMaterials.wood(true), roughness:0.44, metalness:0, envMapIntensity:0.35 }),
+                dark: new THREE.MeshStandardMaterial({ color: 0xffffff, map:window.chessMaterials.wood(false), roughness:0.38, metalness:0, envMapIntensity:0.35 })
             };
         }
     }
@@ -264,7 +264,7 @@ class Board3D {
             const newMat = window.pieceModelFactory.getMaterial(p.color === 'white', newTheme);
             const oldMaterials = new Set();
             p.mesh.traverse(child => {
-                if (child.isMesh) { oldMaterials.add(child.material); child.material = newMat; }
+                if (child.isMesh && !child.userData.detailMaterial) { oldMaterials.add(child.material); child.material = newMat; }
             });
             oldMaterials.forEach(material => material.dispose());
         });
@@ -669,6 +669,37 @@ class Board3D {
         });
         geometries.forEach(geometry => geometry.dispose());
         materials.forEach(material => material.dispose());
+    }
+
+    beveledBoard(size, depth, bevel) {
+        const half = size / 2 - bevel;
+        const shape = new THREE.Shape();
+        shape.moveTo(-half,-half); shape.lineTo(half,-half);
+        shape.lineTo(half,half); shape.lineTo(-half,half); shape.closePath();
+        const geometry = new THREE.ExtrudeGeometry(shape, {
+            depth, bevelEnabled:true, bevelThickness:bevel, bevelSize:bevel, bevelSegments:3, steps:1
+        });
+        geometry.rotateX(-Math.PI / 2);
+        return geometry;
+    }
+
+    addCoordinates(group) {
+        const label = (text, x, z, flipped) => {
+            const canvas = document.createElement('canvas'); canvas.width=128; canvas.height=128;
+            const context = canvas.getContext('2d');
+            context.fillStyle='#e6d2b4'; context.font='500 78px Georgia'; context.textAlign='center'; context.textBaseline='middle';
+            context.fillText(text,64,67);
+            const texture = new THREE.CanvasTexture(canvas); texture.encoding=THREE.sRGBEncoding;
+            const mesh = new THREE.Mesh(new THREE.PlaneGeometry(.22,.22), new THREE.MeshBasicMaterial({map:texture,transparent:true,depthWrite:false}));
+            mesh.rotation.x=-Math.PI/2; if (flipped) mesh.rotateZ(Math.PI);
+            mesh.position.set(x,.085,z); group.add(mesh);
+        };
+        for (let index=0; index<8; index++) {
+            label(String.fromCharCode(97+index),index-3.5,4.22,false);
+            label(String.fromCharCode(97+index),index-3.5,-4.22,true);
+            label(String(index+1),-4.22,3.5-index,false);
+            label(String(index+1),4.22,3.5-index,true);
+        }
     }
 }
 
