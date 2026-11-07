@@ -145,28 +145,50 @@ class ChessAccount {
         finally { this.setBusy(false); }
     }
     async initGoogleAuth() {
+        const DEFAULT_CLIENT_ID = '1071006060591-tmhssin2h21lcre235vtolojh4g403ep.apps.googleusercontent.com';
+        const container = document.getElementById('google-auth-container');
+        if (container) container.style.display = 'block';
+
         try {
             const config = await this.request('auth/config');
-            this.googleConfig = config;
-            if (config?.google_enabled) {
-                const interval = setInterval(() => {
-                    if (window.google?.accounts?.id) {
-                        clearInterval(interval);
-                        this.renderGoogleButton();
-                    }
-                }, 100);
-                setTimeout(() => clearInterval(interval), 10000);
-            } else {
-                const container = document.getElementById('google-auth-container');
-                if (container) container.style.display = 'none';
+            this.googleConfig = config || {};
+            if (!this.googleConfig.google_client_id) {
+                this.googleConfig.google_client_id = DEFAULT_CLIENT_ID;
+                this.googleConfig.google_enabled = true;
             }
         } catch {
-            const container = document.getElementById('google-auth-container');
-            if (container) container.style.display = 'none';
+            this.googleConfig = {
+                google_enabled: true,
+                google_client_id: DEFAULT_CLIENT_ID
+            };
+        }
+
+        // Render the Google authentication button immediately
+        this.renderGoogleButton();
+
+        // Also monitor for Google Identity Services script if not yet loaded
+        if (!window.google?.accounts?.id) {
+            let attempts = 0;
+            const interval = setInterval(() => {
+                attempts++;
+                if (window.google?.accounts?.id) {
+                    clearInterval(interval);
+                    this.renderGoogleButton();
+                } else if (attempts > 50) {
+                    clearInterval(interval);
+                }
+            }, 100);
         }
     }
     renderGoogleButton() {
-        if (!this.googleConfig?.google_client_id) return;
+        if (!this.googleConfig?.google_client_id) {
+            this.googleConfig = this.googleConfig || {};
+            this.googleConfig.google_client_id = '1071006060591-tmhssin2h21lcre235vtolojh4g403ep.apps.googleusercontent.com';
+            this.googleConfig.google_enabled = true;
+        }
+        const container = document.getElementById('google-auth-container');
+        if (container) container.style.display = 'block';
+
         const target = document.getElementById('google-signin-btn');
         if (!target) return;
 

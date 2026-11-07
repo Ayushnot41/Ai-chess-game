@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 480" width="100%" height="480">
+  <defs>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#a855f7" />
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8" />
+    </marker>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="1000" height="480" rx="16" fill="#070a14" stroke="#1e293b" stroke-width="1.5" />
+
+  <!-- Title -->
+  <g transform="translate(36, 40)">
+    <text font-family="'Cinzel', serif" font-size="22" font-weight="900" fill="#ffffff" letter-spacing="1">SYSTEM ARCHITECTURE &amp; DATA PIPELINE</text>
+    <text y="22" font-family="'Inter', sans-serif" font-size="12" fill="#94a3b8">Decoupled Three-Tier Architecture: WebGL 3D Presentation, FastAPI REST Gateway, Python Adversarial Engine</text>
+  </g>
+
+  <!-- Tier 1: Client Presentation Tier -->
+  <g transform="translate(36, 95)">
+    <rect width="280" height="340" rx="12" fill="url(#cardGrad)" stroke="#38bdf8" stroke-width="1.5" />
+    <text x="20" y="32" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="800" fill="#38bdf8">CLIENT TIER (BROWSER)</text>
+
+    <!-- Sub-boxes -->
+    <rect x="18" y="52" width="244" height="60" rx="8" fill="#0a0f1d" stroke="#334155" />
+    <text x="30" y="76" font-family="'Inter', sans-serif" font-size="12" font-weight="700" fill="#ffffff">Three.js 3D WebGL Arena</text>
+    <text x="30" y="96" font-family="'Inter', sans-serif" font-size="11" fill="#94a3b8">Procedural Staunton, Parabolic Arcs</text>
+
+    <rect x="18" y="124" width="244" height="60" rx="8" fill="#0a0f1d" stroke="#334155" />
+    <text x="30" y="148" font-family="'Inter', sans-serif" font-size="12" font-weight="700" fill="#ffffff">Child-Friendly Coach HUD</text>
+    <text x="30" y="168" font-family="'Inter', sans-serif" font-size="11" fill="#94a3b8">"⚡ Play Best Move", Undo, Speech Tips</text>
+
+    <rect x="18" y="196" width="244" height="60" rx="8" fill="#0a0f1d" stroke="#334155" />
+    <text x="30" y="220" font-family="'Inter', sans-serif" font-size="12" font-weight="700" fill="#ffffff">Web Audio &amp; Confetti FX</text>
+    <text x="30" y="240" font-family="'Inter', sans-serif" font-size="11" fill="#94a3b8">Oscillator Synthesizer, Victory Canvas</text>
+
+    <rect x="18" y="268" width="244" height="52" rx="8" fill="#0a0f1d" stroke="#334155" />
+    <text x="30" y="290" font-family="'Inter', sans-serif" font-size="12" font-weight="700" fill="#ffffff">Fullscreen &amp; Local Accounts</text>
+    <text x="30" y="308" font-family="'Inter', sans-serif" font-size="11" fill="#94a3b8">Focus Mode, Game Save/Load</text>
+  </g>
+
+  <!-- Connectors 1 -> 2 -->
+  <line x1="316" y1="210" x2="368" y2="210" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)" />
+  <line x1="368" y1="240" x2="322" y2="240" stroke="#10b981" stroke-width="2" marker-end="url(#arrow)" />
+  <text x="342" y="198" font-family="'JetBrains Mono', monospace" font-size="9" fill="#38bdf8" text-anchor="middle">JSON POST</text>
+  <text x="342" y="260" font-family="'JetBrains Mono', monospace" font-size="9" fill="#10b981" text-anchor="middle">EVAL/MOVE</text>
+
+  <!-- Tier 2: API Gateway Tier -->
+  <g transform="translate(372, 95)">
+    <rect width="256" height="340" rx="12" fill="url(#cardGrad)" stroke="#10b981" stroke-width="1.5" />
+    <text x="20" y="32" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="800" fill="#10b981">GATEWAY (FASTAPI)</text>
+
+    <!-- Sub-boxes -->
+    <rect x="18" y="52" width="220" height="60" rx="8" fill="#0a0f1d" stroke="#334155" />
+    <text x="30" y="76" font-family="'Inter', sans-serif" font-size="12" font-weight="700" fill="#ffffff">REST Route Handlers</text>
+    <text x="30" y="96" font-family="'JetBrains Mono', monospace" font-size="10.5" fill="#10b981">/api/predict • /api/move</text>
+
+    <rect x="18" y="124" width="220" height="60" rx="8" fill="#0a0f1d" stroke="#334155" />
+    <text x="30" y="148" font-family="'Inter', sans-serif" font-size="12" font-weight="700" fill="#ffffff">Concurrency Gate</text>
+    <text x="30" y="168" font-family="'Inter', sans-serif" font-size="11" fill="#94a3b8">BoundedSemaphore Slots</text>
+
+    <rect x="18" y="196" width="220" height="60" rx="8" fill="#0a0f1d" stroke="#334155" />
+    <text x="30" y="220" font-family="'Inter', sans-serif" font-size="12" font-weight="700" fill="#ffffff">Security &amp; Origin Control</text>
+    <text x="30" y="240" font-family="'Inter', sans-serif" font-size="11" fill="#94a3b8">Wildcard Regex CORS, Nosniff</text>
+
+    <rect x="18" y="268" width="220" height="52" rx="8" fill="#0a0f1d" stroke="#334155" />
+    <text x="30" y="290" font-family="'Inter', sans-serif" font-size="12" font-weight="700" fill="#ffffff">Zero-Cost Live Tunnel</text>
+    <text x="30" y="308" font-family="'Inter', sans-serif" font-size="11" fill="#94a3b8">Cloudflare Tunnel Daemon</text>
+  </g>
+
+  <!-- Connectors 2 -> 3 -->
+  <line x1="628" y1="210" x2="680" y2="210" stroke="#10b981" stroke-width="2" marker-end="url(#arrow)" />
+  <line x1="680" y1="240" x2="634" y2="240" stroke="#a855f7" stroke-width="2" marker-end="url(#arrow)" />
+  <text x="654" y="198" font-family="'JetBrains Mono', monospace" font-size="9" fill="#10b981" text-anchor="middle">BOARD FEN</text>
+  <text x="654" y="260" font-family="'JetBrains Mono', monospace" font-size="9" fill="#a855f7" text-anchor="middle">SCORED PV</text>
+
+  <!-- Tier 3: Python Adversarial Intelligence Engine -->
+  <g transform="translate(684, 95)">
+    <rect width="280" height="340" rx="12" fill="url(#cardGrad)" stroke="#a855f7" stroke-width="1.5" />
+    <text x="20" y="32" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="800" fill="#a855f7">ENGINE (PYTHON)</text>
+
+    <!-- Sub-boxes -->
+    <rect x="18" y="52" width="244" height="60" rx="8" fill="#0a0f1d" stroke="#334155" />
+    <text x="30" y="76" font-family="'Inter', sans-serif" font-size="12" font-weight="700" fill="#ffffff">PeSTO Tapered PST</text>
+    <text x="30" y="96" font-family="'Inter', sans-serif" font-size="11" fill="#94a3b8">MG/EG Interpolation (Phase 0-24)</text>
+
+    <rect x="18" y="124" width="244" height="60" rx="8" fill="#0a0f1d" stroke="#334155" />
+    <text x="30" y="148" font-family="'Inter', sans-serif" font-size="12" font-weight="700" fill="#ffffff">Negamax α-β Pruning</text>
+    <text x="30" y="168" font-family="'Inter', sans-serif" font-size="11" fill="#94a3b8">Move Ordering: Hash, MVV-LVA, Killers</text>
+
+    <rect x="18" y="196" width="244" height="60" rx="8" fill="#0a0f1d" stroke="#334155" />
+    <text x="30" y="220" font-family="'Inter', sans-serif" font-size="12" font-weight="700" fill="#ffffff">Quiescence &amp; Transposition</text>
+    <text x="30" y="240" font-family="'Inter', sans-serif" font-size="11" fill="#94a3b8">Delta Pruning + Zobrist 64-bit Cache</text>
+
+    <rect x="18" y="268" width="244" height="52" rx="8" fill="#0a0f1d" stroke="#334155" />
+    <text x="30" y="290" font-family="'Inter', sans-serif" font-size="12" font-weight="700" fill="#ffffff">Tactical Motif Detector</text>
+    <text x="30" y="308" font-family="'Inter', sans-serif" font-size="11" fill="#94a3b8">Forks, Pins, Skewers, Outposts</text>
+  </g>
+</svg>

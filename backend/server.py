@@ -407,10 +407,12 @@ frontend_dir = None
 assets_dir = None
 
 for candidate in [
+    Path(__file__).resolve().parent / "public",
     Path(__file__).resolve().parent.parent / "public",
     Path(__file__).resolve().parent.parent / "frontend",
     Path(__file__).resolve().parent.parent.parent / "public",
     Path(__file__).resolve().parent.parent.parent / "frontend",
+    Path.cwd() / "api" / "public",
     Path.cwd() / "public",
     Path.cwd() / "frontend",
 ]:
@@ -449,6 +451,14 @@ if frontend_dir:
 
     app.mount("/frontend", StaticFiles(directory=str(frontend_dir), html=True), name="frontend_explicit")
     app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
+else:
+    from fastapi.responses import HTMLResponse
+
+    @app.get("/", include_in_schema=False)
+    @app.get("/index.html", include_in_schema=False)
+    async def serve_fallback_root():
+        return HTMLResponse("<!DOCTYPE html><html><head><meta http-equiv='refresh' content='1;url=/'></head><body>Loading Grandmaster AI...</body></html>")
+
 
 
 if __name__ == "__main__":
