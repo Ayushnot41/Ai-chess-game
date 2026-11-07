@@ -73,3 +73,4 @@ data/
 .env.*
 !.env.example
 .qa/python/
+.vercel
