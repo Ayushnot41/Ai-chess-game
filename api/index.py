@@ -34,7 +34,7 @@ class VercelPathMiddleware:
             matched_path = headers.get(b"x-matched-path", b"").decode("utf-8", "ignore")
 
             target_path = path
-            if matched_path and matched_path.startswith("/api/"):
+            if matched_path and matched_path.startswith("/api"):
                 target_path = matched_path
             elif path.startswith("/api/index.py"):
                 remainder = path[len("/api/index.py"):]
@@ -42,12 +42,10 @@ class VercelPathMiddleware:
             elif path.startswith("/index.py"):
                 remainder = path[len("/index.py"):]
                 target_path = "/api" + remainder if remainder.startswith("/") else ("/api/" + remainder if remainder else "/api/status")
-            elif path in ("/", "/index.html", ""):
-                target_path = "/"
-            elif path.startswith(("/assets/", "/js/", "/css/", "/favicon.ico")):
-                target_path = path
-            elif not path.startswith(("/api/", "/docs", "/openapi")):
-                target_path = f"/api{path}"
+            elif path.startswith("/frontend/"):
+                target_path = path[len("/frontend"):]
+            elif path.startswith("/public/"):
+                target_path = path[len("/public"):]
 
             scope["path"] = target_path
             scope["raw_path"] = target_path.encode("utf-8")

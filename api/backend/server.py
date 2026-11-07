@@ -407,8 +407,11 @@ frontend_dir = None
 assets_dir = None
 
 for candidate in [
+    Path(__file__).resolve().parent.parent / "public",
     Path(__file__).resolve().parent.parent / "frontend",
+    Path(__file__).resolve().parent.parent.parent / "public",
     Path(__file__).resolve().parent.parent.parent / "frontend",
+    Path.cwd() / "public",
     Path.cwd() / "frontend",
 ]:
     if candidate.is_dir() and (candidate / "index.html").is_file():
@@ -438,6 +441,13 @@ if frontend_dir:
     async def serve_index_html():
         return FileResponse(str(frontend_dir / "index.html"))
 
+    @app.get("/frontend", include_in_schema=False)
+    @app.get("/frontend/", include_in_schema=False)
+    @app.get("/frontend/index.html", include_in_schema=False)
+    async def serve_frontend_index():
+        return FileResponse(str(frontend_dir / "index.html"))
+
+    app.mount("/frontend", StaticFiles(directory=str(frontend_dir), html=True), name="frontend_explicit")
     app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
 
 
