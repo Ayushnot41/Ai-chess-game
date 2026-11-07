@@ -245,8 +245,25 @@ def google_callback(request: Request):
 
     client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
     client_secret = os.getenv("GOOGLE_CLIENT_SECRET", "").strip()
-    base_url = str(request.base_url).rstrip("/")
-    redirect_uri = f"{base_url}/api/auth/google/callback"
+
+    # Determine exact redirect_uri matching client authorization request
+    redirect_uri = None
+    state_param = request.query_params.get("state")
+    if state_param:
+        try:
+            import base64
+            decoded = base64.urlsafe_b64decode(state_param.encode()).decode("utf-8")
+            state_data = json.loads(decoded)
+            cand = state_data.get("redirect_uri")
+            if cand and cand.endswith("/api/auth/google/callback"):
+                redirect_uri = cand
+        except Exception:
+            pass
+
+    if not redirect_uri:
+        proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+        host = request.headers.get("x-forwarded-host") or request.headers.get("host") or request.url.netloc
+        redirect_uri = f"{proto}://{host}/api/auth/google/callback"
 
     import httpx
     try:
@@ -265,7 +282,14 @@ def google_callback(request: Request):
         return RedirectResponse(url="/?auth_error=google_connection_failed", status_code=303)
 
     if token_res.status_code != 200:
-        return RedirectResponse(url="/?auth_error=token_exchange_failed", status_code=303)
+        err_msg = "token_exchange_failed"
+        try:
+            err_data = token_res.json()
+            raw_msg = err_data.get("error_description") or err_data.get("error", "token_exchange_failed")
+            err_msg = re.sub(r"[^a-zA-Z0-9_-]", "_", str(raw_msg))[:80]
+        except Exception:
+            pass
+        return RedirectResponse(url=f"/?auth_error={err_msg}", status_code=303)
 
     token_data = token_res.json()
     id_token = token_data.get("id_token")
