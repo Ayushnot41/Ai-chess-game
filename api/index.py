@@ -42,7 +42,11 @@ class VercelPathMiddleware:
             elif path.startswith("/index.py"):
                 remainder = path[len("/index.py"):]
                 target_path = "/api" + remainder if remainder.startswith("/") else ("/api/" + remainder if remainder else "/api/status")
-            elif not path.startswith("/api/") and not path.startswith("/docs") and not path.startswith("/openapi"):
+            elif path in ("/", "/index.html", ""):
+                target_path = "/"
+            elif path.startswith(("/assets/", "/js/", "/css/", "/favicon.ico")):
+                target_path = path
+            elif not path.startswith(("/api/", "/docs", "/openapi")):
                 target_path = f"/api{path}"
 
             scope["path"] = target_path

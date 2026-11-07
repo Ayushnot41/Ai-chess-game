@@ -402,10 +402,43 @@ def validate_move(req: ValidateMoveRequest):
     }
 
 
-# Mount frontend static directory if present
-frontend_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend")
-if os.path.exists(frontend_path):
-    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
+# Resolve frontend and assets directories dynamically across local and serverless execution
+frontend_dir = None
+assets_dir = None
+
+for candidate in [
+    Path(__file__).resolve().parent.parent / "frontend",
+    Path(__file__).resolve().parent.parent.parent / "frontend",
+    Path.cwd() / "frontend",
+]:
+    if candidate.is_dir() and (candidate / "index.html").is_file():
+        frontend_dir = candidate
+        break
+
+for candidate in [
+    Path(__file__).resolve().parent.parent / "assets",
+    Path(__file__).resolve().parent.parent.parent / "assets",
+    Path.cwd() / "assets",
+]:
+    if candidate.is_dir():
+        assets_dir = candidate
+        break
+
+if assets_dir:
+    app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+
+if frontend_dir:
+    from fastapi.responses import FileResponse
+
+    @app.get("/", include_in_schema=False)
+    async def serve_root():
+        return FileResponse(str(frontend_dir / "index.html"))
+
+    @app.get("/index.html", include_in_schema=False)
+    async def serve_index_html():
+        return FileResponse(str(frontend_dir / "index.html"))
+
+    app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
 
 
 if __name__ == "__main__":
