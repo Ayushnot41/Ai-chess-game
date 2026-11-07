@@ -155,6 +155,38 @@ class ChessApp {
         else this.requestPredictions();
     }
 
+    computeLocalAIMove() {
+        const moves = this.chess.moves({ verbose: true });
+        if (!moves.length) return null;
+        const pieceValues = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
+        const centerSquares = ['d4', 'd5', 'e4', 'e5', 'c4', 'c5', 'f4', 'f5'];
+
+        let bestScore = -Infinity;
+        let bestMove = moves[0];
+        const shuffled = [...moves].sort(() => Math.random() - 0.5);
+
+        for (const m of shuffled) {
+            let score = 0;
+            if (m.captured) {
+                const victimVal = pieceValues[m.captured] || 100;
+                const attackerVal = pieceValues[m.piece] || 100;
+                score += victimVal * 10 - attackerVal;
+            }
+            if (m.promotion) score += 800;
+            if (centerSquares.includes(m.to)) score += 25;
+            this.chess.move(m);
+            if (this.chess.in_check()) score += 40;
+            if (this.chess.in_checkmate()) score += 100000;
+            this.chess.undo();
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = m;
+            }
+        }
+        return bestMove;
+    }
+
     async triggerAIMove() {
         if (this.isAiThinking || this.isPlayerTurn() || this.chess.game_over()) return;
         const token = this.positionToken();
@@ -162,8 +194,26 @@ class ChessApp {
         this.clearError();
         this.updatePlayStatus();
         this.setAiStatus(true, 'Your opponent is thinking…');
-        const response = await window.chessAPI.getAIMove(token.fen, this.aiDepth, 3);
+
+        let response = null;
+        try {
+            response = await window.chessAPI.getAIMove(token.fen, this.aiDepth, 3);
+        } catch (e) {
+            console.warn('Backend move request encountered an issue, using local engine fallback:', e);
+        }
+
         if (!this.isCurrent(token)) return;
+
+        // Guaranteed fallback to fast client-side engine if backend is slow, cold starting, or unreachable
+        if (!response?.best_move_uci) {
+            const fallback = this.computeLocalAIMove();
+            if (fallback) {
+                response = {
+                    best_move_uci: fallback.from + fallback.to + (fallback.promotion || '')
+                };
+            }
+        }
+
         if (!response?.best_move_uci) {
             this.isAiThinking = false;
             this.updatePlayStatus();
@@ -301,12 +351,21 @@ class ChessApp {
         if (this.isBusy() || !this.isPlayerTurn() || this.chess.game_over()) return;
         const token = this.positionToken();
         this.coachBusy = true; this.updatePlayStatus();
-        const pred = this.cachedPrediction?.fen === token.fen ? this.cachedPrediction.data
-            : await window.chessAPI.predict(token.fen, 1, 3, 'coach');
+        let pred = null;
+        try {
+            pred = this.cachedPrediction?.fen === token.fen ? this.cachedPrediction.data
+                : await window.chessAPI.predict(token.fen, 1, 3, 'coach');
+        } catch (e) {
+            console.warn('Backend coach prediction issue:', e);
+        }
         if (!this.isCurrent(token)) return;
         this.coachBusy = false;
-        if (!pred?.candidates?.length) { this.updatePlayStatus(); return; }
-        const uci = pred.candidates[0].move_uci;
+        let uci = pred?.candidates?.[0]?.move_uci;
+        if (!uci) {
+            const fallback = this.computeLocalAIMove();
+            if (fallback) uci = fallback.from + fallback.to + (fallback.promotion || '');
+        }
+        if (!uci) { this.updatePlayStatus(); return; }
         const move = this.chess.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4] || 'q'});
         if (move) this.finishPlayerMove(move);
         else this.updatePlayStatus();
