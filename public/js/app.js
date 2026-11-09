@@ -44,7 +44,7 @@ class ChessApp {
         this.restoreGame();
         this.board3D.playerColor = this.playerColor;
         this.board3D.loadFEN(this.chess.fen());
-        this.board3D.resetCameraView(this.playerColor);
+        this.board3D.resetCameraView('perspective');
         this.syncMode();
         this.refreshPosition();
         if (!this.isPlayerTurn() && !this.chess.game_over()) this.triggerAIMove();
@@ -202,7 +202,11 @@ class ChessApp {
             console.warn('Backend move request encountered an issue, using local engine fallback:', e);
         }
 
-        if (!this.isCurrent(token)) return;
+        if (!this.isCurrent(token)) {
+            this.isAiThinking = false;
+            this.updatePlayStatus();
+            return;
+        }
 
         // Guaranteed fallback to fast client-side engine if backend is slow, cold starting, or unreachable
         if (!response?.best_move_uci) {
@@ -358,8 +362,11 @@ class ChessApp {
         } catch (e) {
             console.warn('Backend coach prediction issue:', e);
         }
-        if (!this.isCurrent(token)) return;
         this.coachBusy = false;
+        if (!this.isCurrent(token)) {
+            this.updatePlayStatus();
+            return;
+        }
         let uci = pred?.candidates?.[0]?.move_uci;
         if (!uci) {
             const fallback = this.computeLocalAIMove();
@@ -556,7 +563,11 @@ class ChessApp {
         if (!candidate.load(fen)) { errorBox.textContent = 'That position is not valid. Check the FEN and try again.'; return; }
         const response = await window.chessAPI.request('evaluate', {fen:candidate.fen(), initial_fen:candidate.fen(), moves:[]}, 'position');
         if (!response) { errorBox.textContent = 'The position could not be loaded. Check that both kings are present and the engine is running.'; return; }
-        if (!this.isCurrent(token)) return;
+        if (!this.isCurrent(token)) {
+            this.isAiThinking = false;
+            this.updatePlayStatus();
+            return;
+        }
         this.invalidatePosition();
         this.chess = candidate;
         this.initialFen = this.chess.fen();
@@ -612,11 +623,14 @@ class ChessApp {
         const token = this.positionToken();
         this.isAnimating = true; this.updatePlayStatus();
         this.board3D.animateMove(move.from, move.to, move.promotion, () => {
-            if (!this.isCurrent(token)) return;
-            // Reconcile special moves (castling rook, en passant pawn, promotion).
-            this.board3D.loadFEN(this.chess.fen());
-            this.board3D.highlightMove(move.from, move.to);
-            this.isAnimating = false; done();
+            this.isAnimating = false;
+            if (this.isCurrent(token)) {
+                // Reconcile special moves (castling rook, en passant pawn, promotion).
+                this.board3D.loadFEN(this.chess.fen());
+                this.board3D.highlightMove(move.from, move.to);
+            }
+            if (typeof done === 'function') done();
+            this.updatePlayStatus();
         });
     }
     refreshPosition() {
@@ -740,7 +754,11 @@ class ChessApp {
             if (!move) { this.showError('That move is not legal. Try e4 or g1f3, or choose Hint.'); return; }
             input.value = ''; this.finishPlayerMove(move);
         });
-        document.getElementById('btn-retry-ai').addEventListener('click', () => this.triggerAIMove());
+        document.getElementById('btn-retry-ai').addEventListener('click', () => {
+            this.isAiThinking = false;
+            this.isAnimating = false;
+            this.triggerAIMove();
+        });
         document.getElementById('btn-export').addEventListener('click', () => this.exportPGN());
         document.getElementById('select-difficulty').addEventListener('change', () => this.saveGame());
         document.getElementById('select-theme').addEventListener('change', () => this.saveGame());

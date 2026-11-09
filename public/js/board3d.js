@@ -33,8 +33,8 @@ class Board3D {
     }
 
     init() {
-        const width = this.container.clientWidth;
-        const height = this.container.clientHeight;
+        const width = (this.container && this.container.clientWidth > 0) ? this.container.clientWidth : (window.innerWidth || 800);
+        const height = (this.container && this.container.clientHeight > 0) ? this.container.clientHeight : (Math.max(300, window.innerHeight - 120));
 
         // 1. Scene
         this.scene = new THREE.Scene();
@@ -42,20 +42,34 @@ class Board3D {
         this.scene.fog = new THREE.Fog(0x171e1a, 20, 52);
 
         // 2. Camera
-        this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-        this.resetCameraView('perspective');
+        const aspect = width / height;
+        this.camera = new THREE.PerspectiveCamera(45, isFinite(aspect) && aspect > 0 ? aspect : 1.6, 0.1, 100);
 
         // 3. Renderer
-        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
+        try {
+            this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
+        } catch (e) {
+            console.warn("WebGL creation fallback:", e);
+            this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false });
+        }
         this.renderer.setSize(width, height);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 0.9;
         this.renderer.outputEncoding = THREE.sRGBEncoding;
-        this.studioTarget = window.chessMaterials.studio(this.renderer);
-        this.scene.environment = this.studioTarget.texture;
+
+        if (window.chessMaterials && typeof window.chessMaterials.studio === 'function') {
+            try {
+                this.studioTarget = window.chessMaterials.studio(this.renderer);
+                if (this.studioTarget && this.studioTarget.texture) {
+                    this.scene.environment = this.studioTarget.texture;
+                }
+            } catch (err) {
+                console.warn('Environment map initialization bypassed:', err);
+            }
+        }
         this.container.appendChild(this.renderer.domElement);
 
         // 4. Orbit Controls
@@ -64,7 +78,19 @@ class Board3D {
         this.controls.dampingFactor = 0.08;
         this.controls.maxPolarAngle = Math.PI / 2 - 0.05; // Prevent camera going below board
         this.controls.minDistance = 6;
-        this.controls.maxDistance = 22;
+        this.controls.maxDistance = 24;
+
+        this.resetCameraView('perspective');
+
+        // WebGL Context recovery handlers
+        this.renderer.domElement.addEventListener('webglcontextlost', (event) => {
+            event.preventDefault();
+            console.warn('WebGL context lost, pausing render loop');
+        }, false);
+        this.renderer.domElement.addEventListener('webglcontextrestored', () => {
+            console.info('WebGL context restored, reloading position');
+            if (this.currentFen) this.loadFEN(this.currentFen);
+        }, false);
 
         // 5. Lighting
         this.setupLights();
@@ -238,21 +264,28 @@ class Board3D {
         const isBlack = this.playerColor === 'black';
         const sign = isBlack ? -1 : 1;
 
+        let targetY = 0.2;
         if (preset === 'tactical' || preset === '2d') {
-            this.camera.position.set(0, 14, 0.01 * sign);
-            this.camera.lookAt(0, 0, 0);
+            // Slight safe Z offset avoids Gimbal lock degenerate cross-product on pure vertical axis
+            this.camera.position.set(0, 14, 0.8 * sign);
+            targetY = 0;
         } else if (preset === 'white') {
             this.camera.position.set(0, 7.5, 9);
-            this.camera.lookAt(0, 0.5, 0);
+            targetY = 0.4;
         } else if (preset === 'black') {
             this.camera.position.set(0, 7.5, -9);
-            this.camera.lookAt(0, 0.5, 0);
+            targetY = 0.4;
         } else {
             // Standard dynamic 3D perspective
             this.camera.position.set(0.5, 9, 8.5 * sign);
-            this.camera.lookAt(0, 0.2, 0);
+            targetY = 0.2;
         }
-        if (this.controls) this.controls.update();
+        if (this.controls) {
+            this.controls.target.set(0, targetY, 0);
+            this.controls.update();
+        } else {
+            this.camera.lookAt(0, targetY, 0);
+        }
     }
 
     setTheme(newTheme) {
@@ -280,6 +313,8 @@ class Board3D {
     }
 
     loadFEN(fen) {
+        if (!fen || typeof fen !== 'string') return;
+        this.currentFen = fen;
         this.positionVersion++;
         // Clear all current piece meshes
         this.removeObjects(Object.values(this.pieceMeshes).map(piece => piece.mesh));
@@ -675,11 +710,17 @@ class Board3D {
     }
 
     onWindowResize() {
-        const width = this.container.clientWidth;
-        const height = this.container.clientHeight;
-        if (!width || !height) return;
-        this.camera.aspect = width / height;
-        this.camera.zoom = Math.min(1, this.camera.aspect / 1.1) * (this.camera.aspect < 1.1 ? 0.78 : 0.88);
+        if (!this.container || !this.renderer || !this.camera) return;
+        const width = this.container.clientWidth || window.innerWidth || 800;
+        const height = this.container.clientHeight || Math.max(300, window.innerHeight - 120);
+        if (width <= 0 || height <= 0) return;
+
+        const aspect = width / height;
+        if (!isFinite(aspect) || aspect <= 0) return;
+
+        this.camera.aspect = aspect;
+        const zoomFactor = Math.min(1.0, aspect / 1.1) * (aspect < 1.1 ? 0.78 : 0.88);
+        this.camera.zoom = isFinite(zoomFactor) && zoomFactor > 0.1 ? zoomFactor : 0.85;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
     }
@@ -688,36 +729,40 @@ class Board3D {
         requestAnimationFrame(this.animate);
         if (document.hidden) return;
 
-        // Update OrbitControls
-        if (this.controls) this.controls.update();
+        try {
+            // Update OrbitControls
+            if (this.controls) this.controls.update();
 
-        // Update Capture Particles
-        const delta = 0.016;
-        for (let i = this.particles.length - 1; i >= 0; i--) {
-            const p = this.particles[i];
-            p.mesh.position.addScaledVector(p.velocity, delta);
-            p.velocity.y -= 9.8 * delta; // Gravity
-            p.life -= delta * 1.5;
-            p.mesh.material.opacity = Math.max(0, p.life);
+            // Update Capture Particles
+            const delta = 0.016;
+            for (let i = this.particles.length - 1; i >= 0; i--) {
+                const p = this.particles[i];
+                p.mesh.position.addScaledVector(p.velocity, delta);
+                p.velocity.y -= 9.8 * delta; // Gravity
+                p.life -= delta * 1.5;
+                if (p.mesh.material) p.mesh.material.opacity = Math.max(0, p.life);
 
-            if (p.life <= 0) {
-                this.removeObjects([p.mesh]);
-                this.particles.splice(i, 1);
+                if (p.life <= 0) {
+                    this.removeObjects([p.mesh]);
+                    this.particles.splice(i, 1);
+                }
             }
-        }
 
-        // Pulse king check aura
-        if (this.kingCheckMesh && !this.reducedMotion) {
-            const scale = 1.0 + Math.sin(now * 0.008) * 0.12;
-            this.kingCheckMesh.scale.set(scale, 1, scale);
-        }
+            // Pulse king check aura
+            if (this.kingCheckMesh && !this.reducedMotion) {
+                const scale = 1.0 + Math.sin(now * 0.008) * 0.12;
+                this.kingCheckMesh.scale.set(scale, 1, scale);
+            }
 
-        // Gentle float for predicted arrow
-        if (this.arrowMesh && !this.reducedMotion) {
-            this.arrowMesh.position.y = Math.sin(now * 0.005) * 0.06;
-        }
+            // Gentle float for predicted arrow
+            if (this.arrowMesh && !this.reducedMotion) {
+                this.arrowMesh.position.y = Math.sin(now * 0.005) * 0.06;
+            }
 
-        this.renderer.render(this.scene, this.camera);
+            this.renderer.render(this.scene, this.camera);
+        } catch (err) {
+            console.warn('Render loop frame caught:', err);
+        }
     }
 
     removeObjects(objects) {

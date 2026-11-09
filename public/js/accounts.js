@@ -204,6 +204,22 @@ class ChessAccount {
                     auto_select: false,
                     cancel_on_tap_outside: true
                 });
+                const gisTarget = document.getElementById('gis-button-target');
+                const directBtn = document.getElementById('direct-google-btn');
+                if (gisTarget) {
+                    window.google.accounts.id.renderButton(gisTarget, {
+                        theme: 'filled_black',
+                        size: 'large',
+                        shape: 'pill',
+                        width: 280
+                    });
+                    // If GIS renders its button, directBtn can be hidden to avoid duplicate buttons
+                    setTimeout(() => {
+                        if (gisTarget.children.length > 0 && directBtn) {
+                            directBtn.style.display = 'none';
+                        }
+                    }, 300);
+                }
                 if (!this.user) {
                     try { window.google.accounts.id.prompt(); } catch {}
                 }
@@ -215,7 +231,12 @@ class ChessAccount {
         const wrapper = document.createElement('div');
         wrapper.style.cssText = 'display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%;';
 
+        const gisTarget = document.createElement('div');
+        gisTarget.id = 'gis-button-target';
+        wrapper.appendChild(gisTarget);
+
         const btn = document.createElement('button');
+        btn.id = 'direct-google-btn';
         btn.type = 'button';
         btn.className = 'btn-secondary';
         btn.style.cssText = 'width: 280px; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 16px; border-radius: 9999px; background: #18181b; border: 1px solid #3f3f46; color: #fff; font-weight: 500; cursor: pointer; transition: background 0.2s;';

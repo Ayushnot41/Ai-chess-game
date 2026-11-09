@@ -31,23 +31,28 @@ class ChessMaterials {
     }
 
     studio(renderer) {
-        const room = new THREE.Scene();
-        const walls = new THREE.Mesh(new THREE.BoxGeometry(30, 20, 30), new THREE.MeshBasicMaterial({color:0x555555, side:THREE.BackSide}));
-        room.add(walls);
-        const panels = [
-            {position:[-8,8,3],size:[5,10],power:3.5},
-            {position:[7,6,-5],size:[4,8],power:2},
-            {position:[0,10,0],size:[8,8],power:2.5}
-        ];
-        panels.forEach(({position,size,power}) => {
-            const panel = new THREE.Mesh(new THREE.PlaneGeometry(...size), new THREE.MeshBasicMaterial({color:new THREE.Color(1, .94, .85).multiplyScalar(power), side:THREE.DoubleSide}));
-            panel.position.set(...position); panel.lookAt(0,0,0); room.add(panel);
-        });
-        const generator = new THREE.PMREMGenerator(renderer);
-        const target = generator.fromScene(room, .06);
-        room.traverse(object => { object.geometry?.dispose(); object.material?.dispose(); });
-        generator.dispose();
-        return target;
+        try {
+            const room = new THREE.Scene();
+            const walls = new THREE.Mesh(new THREE.BoxGeometry(30, 20, 30), new THREE.MeshBasicMaterial({color:0x555555, side:THREE.BackSide}));
+            room.add(walls);
+            const panels = [
+                {position:[-8,8,3],size:[5,10],power:3.5},
+                {position:[7,6,-5],size:[4,8],power:2},
+                {position:[0,10,0],size:[8,8],power:2.5}
+            ];
+            panels.forEach(({position,size,power}) => {
+                const panel = new THREE.Mesh(new THREE.PlaneGeometry(...size), new THREE.MeshBasicMaterial({color:new THREE.Color(1, .94, .85).multiplyScalar(power), side:THREE.DoubleSide}));
+                panel.position.set(...position); panel.lookAt(0,0,0); room.add(panel);
+            });
+            const generator = new THREE.PMREMGenerator(renderer);
+            const target = generator.fromScene(room, 0.04);
+            room.traverse(object => { object.geometry?.dispose(); object.material?.dispose(); });
+            generator.dispose();
+            return target;
+        } catch (err) {
+            console.warn('Studio generation fallback:', err);
+            return null;
+        }
     }
 }
 window.chessMaterials = new ChessMaterials();
